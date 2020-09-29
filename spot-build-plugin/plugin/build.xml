@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="build" basedir=".">
+
+    <property name="jar.name" value="spot-plugin.jar"/>
+    <property name="plugin.properties.file" value="spot-plugin.properties"/>
+    <property name="user.properties.file" value="build.properties"/>
+    <property file="${user.home}/.sunspot.properties"/>
+    <property name="classes.dir" value="classes"/>
+    <property name="plugin.classpath" value="${sunspot.lib}/hostagent.jar;${sunspot.lib}/spotlib_rt.jar;${sunspot.lib}/RXTXcomm.jar;${sunspot.lib}/squawk_classes.jar;./spot-build-plugin/plugin/spot-plugin.jar;${sunspot.lib}/desktop_signing.jar;${sunspot.lib}/debugclient.jar${line.separator}"/>
+    <property name="classpath" value="../../build.jar;${plugin.classpath}"/>
+
+    <target name="build">
+        <delete dir="${classes.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+        <javac
+            srcdir="src"
+            destdir="${classes.dir}"
+            includeAntRuntime="no"
+            includeJavaRuntime="no"
+            classpath="${classpath}"
+            debug="true"
+            fork="yes"
+        />
+        <jar destfile="${jar.name}" basedir="${classes.dir}/"/>
+        <echo file="${plugin.properties.file}" append="false">classpath=${plugin.classpath}</echo>
+        <echo file="${plugin.properties.file}" append="true">jamspot=com.sun.squawk.builder.commands.JamSpotCommand${line.separator}</echo>
+    </target>
+
+    <target name="clean">
+        <delete dir="${classes.dir}"/>
+        <delete file="${jar.name}"/>
+        <delete file="${plugin.properties.file}"/>
+    </target>
+</project>

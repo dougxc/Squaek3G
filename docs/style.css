@@ -1,0 +1,93 @@
+.h2 {
+	padding: 0px;
+	margin: 0px;
+}
+
+.banner-space {
+	float: left; 
+	height: 43px;
+	width: 1%;  
+}
+
+
+#banner-yellow {
+	float: left; 
+	width: 60%; 
+	height: 43px;
+	background-color: #fbe249;
+}
+
+#banner-red {
+	float: left; 
+	width: 19%; 
+	height: 43px;
+	background-color: #d12124;
+}
+
+#banner-purple {
+	float: left; 
+	width: 19%; 
+	height: 43px;
+	background-color: #594fbf;
+	background-image: url('logo_sun.gif');
+	background-repeat: no-repeat;	
+}
+
+
+
+.child {
+	padding-left:   30px;
+}
+
+
+.dirWithIndex  {
+	font-style: italic;
+	font-weight: bold;	
+	text-transform: capitalize;
+}
+
+.dirWithoutIndex {
+	font-weight: bold;
+	text-transform: capitalize;
+}
+
+
+.description {
+	padding-left:   30px;
+	display: none;
+	font-style: italic;
+	color: #d12124;
+}
+
+.minus {
+	font-style: normal;
+	display: none;
+	font-family:  Courier New;
+	
+}
+
+.minus a {
+	text-decoration: none;
+	color: #d12124;
+}
+
+
+.plus {
+	font-style: normal;
+	font-family:  Courier New;
+}
+
+.plus a {
+	text-decoration: none;
+	color: #d12124;
+}
+
+.showHideAll a {
+	text-decoration: none;
+	color: #d12124;
+}
+
+a {text-decoration:none}
+a:visited {color:#96C}
+a:link {color:#594FBF}
+a:hover {text-decoration:underline}

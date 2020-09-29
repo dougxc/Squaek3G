@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <!--JBuilder Library Definition File-->
+  <fullname>sdp</fullname>
+  <class>
+    <path>../../sdp/classes</path>
+  </class>
+  <source>
+    <path>../../sdp/src</path>
+  </source>
+  <lastmodsaved>1131517451438</lastmodsaved>
+</library>

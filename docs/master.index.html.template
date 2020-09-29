@@ -1,0 +1,51 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Squawk Document Repository</title>
+
+<link rel="stylesheet" href="style.css" type="text/css">
+<SCRIPT SRC="scripts.js"></SCRIPT>
+
+</head>
+
+<body leftmargin="0" onLoad="restoreTableState();">
+
+<!--Start of container>
+<div id="container">
+
+<!--Start of banner>
+<div id="banner">
+<div id="banner-yellow"><h2>Squawk Document Repository</h2></div>
+<div class="banner-space"></div>
+<div id="banner-red"></div>
+<div class="banner-space"></div>
+<div id="banner-purple"></div>
+</div><!--end of banner>
+
+
+<div style="width: 100%; height: 50px;"></div>
+
+<!--Start of content>
+<div id="content" style="width:80%; margin:0 auto; ">
+
+<p>Squawk is a research virtual machine for the Java language that examines better ways of building virtual machines.  Most commercial virtual machines are written in low level languages such as C and assembler.  We believe that virtual machines can be written in higher level languages, such as those they execute themselves.
+
+<p>The main goal of the Squawk project is to write as much of the virtual machine as possible in Java, for portability, ease of debugging, and maintainability (inspired by the Squeak project).  Squawk aims at a small footprint and is CLDC-compatible.  It is meant to be used in small devices. 
+
+<p>This page describes the documentation available for Squawk, including the API it presents.
+<p>
+
+<!--Start of document listing>
+<!docList:.>
+<!--End of document listing>
+
+
+
+</div><!--end of content>
+</div><!--end of container>
+
+
+<p align="right">Generated on <!date>.
+
+</body>
+</html>

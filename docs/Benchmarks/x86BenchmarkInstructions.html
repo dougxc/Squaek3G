@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=windows-1252">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 1.1.4  (Win32)">
+	<META NAME="CREATED" CONTENT="20050329;10070811">
+	<META NAME="CHANGED" CONTENT="20050329;11261795">
+</HEAD>
+<BODY LANG="en-US" DIR="LTR">
+<H1>x86 Platform instructions</H1>
+<P STYLE="margin-top: 0.17in; page-break-after: avoid"><FONT FACE="Albany, sans-serif"><FONT SIZE=4>Notes
+on installation</FONT></FONT></P>
+<P>The <A HREF="BenchmarkCode.zip">BenchmarkCode.zip</A> file has a
+src directory and should be unzipped into the src sub-directory of
+samples in the root of Squawk3G. Within the lowest level directories
+there are 'c' and 'c++' directories for benchmarks where there is C
+and C++ tranlsations of the source code. 
+</P>
+<P>For the Java benchmarks on both Java 2 SDK 1.4.2 and Squawk, the
+driver for the benchmarks is '<FONT SIZE=2><FONT FACE="Courier, monospace">squawk.application.Startup</FONT></FONT>'.
+This single file was used to keep the x86 benchmarks line with the
+embedded (ARM) platform benchmarks. In the squawk/application
+sub-directory of src in BenchmarkCode.zip, there are four
+<FONT SIZE=2><FONT FACE="Courier, monospace">Startup.java</FONT></FONT>
+files each with the name of the benchmark added to the extension of
+the file (to ensure that they are not erroneously picked up by the
+Squawk builder). To run a particular benchmark the appropriate file
+needs to be renamed to <FONT SIZE=2><FONT FACE="Courier, monospace">Startup.java</FONT></FONT>
+prior to building/compiling, i.e. for the Richards benchmarks,
+<FONT SIZE=2><FONT FACE="Courier, monospace">Startup.java-richards</FONT></FONT>
+need to be renamed to <FONT SIZE=2><FONT FACE="Courier, monospace">Startup.java</FONT></FONT>.</P>
+<P STYLE="margin-top: 0.17in; page-break-after: avoid"><FONT FACE="Albany, sans-serif"><FONT SIZE=4>Compilation</FONT></FONT></P>
+<P>C: <BR><FONT SIZE=2><FONT FACE="Courier, monospace">gcc -O0
+richards.c -o richards.exe</FONT></FONT></P>
+<P>C++: <BR><FONT SIZE=2><FONT FACE="Courier, monospace">g++ -O0
+richards.cc -o richards.exe</FONT></FONT></P>
+<P>Java/Squawk: <BR><FONT SIZE=2><FONT FACE="Courier, monospace">java
+-jar build.jar samples</FONT></FONT></P>
+<P STYLE="margin-top: 0.17in; page-break-after: avoid"><FONT FACE="Albany, sans-serif"><FONT SIZE=4>Building
+Squawk for x86 benchmarks</FONT></FONT></P>
+<P>The squawk executable for the benchmarks was built using the
+following command lines, as outlined in HowtoBuildAndRunSquawk.</P>
+<P><FONT FACE="Courier, monospace"><FONT SIZE=2>java -jar build.jar</FONT></FONT></P>
+<P><FONT FACE="Courier, monospace"><FONT SIZE=2>java -jar build.jar
+-prod -o2 -mac rom j2me translator</FONT></FONT></P>
+<P><FONT SIZE=2><FONT FACE="Courier, monospace">java -jar build.jar
+jvmenv </FONT></FONT>(with the suggested command for setting
+JVMDLL/LD_LIBRARY_PATH executed)</P>
+<P STYLE="margin-top: 0.17in; page-break-after: avoid"><FONT FACE="Albany, sans-serif"><FONT SIZE=4>Execution</FONT></FONT></P>
+<P>The output of the benchmarks is directed to standard output
+(std::out on unix machines), and was captured to files as raw output (<a href="RawResults-March2005.zip">RawResults-March2005.zip</a>)
+prior to the compilation into the final <A HREF="../webpages/squawk-sensors.html#bench">results</A>.</P>
+<P>C/C++: <BR><FONT SIZE=2><FONT FACE="Courier, monospace">richards.exe</FONT></FONT></P>
+<P>Java on Java 2 SDK 1.4.2: <BR><FONT SIZE=2><FONT FACE="Courier, monospace">java
+-Xint -classpath samples\classes;j2me\classes
+squawk.application.Startup</FONT></FONT></P>
+<P>Java on Squawk: <BR><FONT SIZE=2><FONT FACE="Courier, monospace">squawk
+-cp:samples/j2meclasses squawk.application.Startup</FONT></FONT></P>
+</BODY>
+</HTML>

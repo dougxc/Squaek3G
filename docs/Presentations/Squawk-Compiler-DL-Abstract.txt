@@ -1,0 +1,17 @@
+
+Title: 		The Squawk Virtual Machine Compiler Architecture
+
+Manager:	Cristina Cifuentes
+
+Abstract:
+
+The Squawk Virtual Machine is a small, execute-in-place, CLDC 1.0 compliant Java Virtual Machine (JVM) written in Java and is designed for simplicity and portability. In standard JVMs (e.g., the KVM), the major components of the virtual machine (the garbage collector, thread scheduler, bytecode interpreter and compiler) are written in C. In the Squawk VM, these components are all written in Java.  Squawk's current deployment on the Sun Spot sensors platform is interpreter-based.
+
+Squawk's compiler architecture will allow the execution of Java code using both, bytecode interpretation and compilation.  The compiler will be used to compile ahead-of-time system classes of the VM itself (e.g., the interpreter, the garbage collection, etc) into native code.  Applications running on Squawk will be run under interpretation mode and its code will be jitted to obtain better performance.
+
+This presentation will provide an overview of the Squawk virtual machine's compiler architecture and summarize David Liu's internship work on the ARM compiler back-end and the integration of the compiler with the Squawk system.
+
+Biography:
+
+David Liu is a recent graduate of the Bachelor of Engineering (Software) program at the University of Queensland in Brisbane, Australia. He has been working with the Squawk group for the past six months and will be returning to Australia to begin a Masters by Research program at UQ. 
+

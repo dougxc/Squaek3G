@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+</head>
+<body>
+<font face="Times New Roman, serif"><font size="7"
+ style="font-size: 32pt;"><b>The Squawk Virtual Machine
+</b></font></font>
+<p>The main goal of the Squawk virtual machine project is to write as much of 
+the virtual machine as possible in Java, for portability, ease of
+debugging, and maintainability (inspired by the Smalltalk <a
+ href="http://www.squeak.org">Squeak</a> project).&nbsp; Traditionally, most
+JVMs are written in C/C++.&nbsp; Squawk aims at pushing the bar and writing
+most of the JVM in Java. 
+</p>
+<p><img border="0" src="../figures/SquawkVM.jpg"></p>
+<p>
+Squawk is fully Java compliant and 
+<a href="http://java.sun.com/products/cldc/">CLDC</a> 1.1-compatible (i.e., it's Java ME).&nbsp;
+</p>
+<h2>Table of Contents</h2>
+<ul>
+  <li><a href="#architecture">The Squawk Architecture</a></li>
+  <li><a href="#pubs">Publications</a></li>
+  <li><a href="#team">The Team</a></li>
+</ul>
+
+<hr>
+<h2><a name="architecture">The Squawk Architecture</a></h2>
+<p>The current architecture of the Squawk VM was inspired in part by 
+the Klein VM architecture. In particular, it is (mostly) implemented in the language that
+it executes (Java); its components include: 
+ 
+<ul>
+    <li>The class loader/bytecode translator</li>
+    <li>The ahead-of-time bytecode optimizer</li>
+    <li>The threading system (green threads)</li>
+    <li>The garbage collectors (selected at build time):
+        <ul>
+            <li>Simple two space Cheney collector</li>
+            <li>Mark/compact "Lisp2" collector</li>
+            <li>Generational mark/compact "Lisp2" collector</li>
+        </ul>
+    </li>
+</ul>
+
+Squawk's design includes a compiler that can be used to:
+
+<ul>
+  <li>compile the core VM components ahead-of-time</li>
+  <li>compile an interpreter written in Java ahead-of-time</li>
+  <li>compile other Java components ahead-of-time</li>
+  <li>compile bytecodes just-in-time (JIT compilation)</li>
+</ul>
+
+<p>Other features of the Squawk architecture include:</p>
+
+<ul>
+    <li>
+<p><b>A compact bytecode instruction set</b></p>
+<ul>
+  <li>Smaller than standard bytecode (35% - 45% size of equivalent J2ME class files)</li>
+  <li>Fixed up/pre linked</li>
+  <li>Immutable ==&gt; execute in place</li>
+  <li>Simplified garbage collection:
+      <ul>
+          <li>local variables are partitioned into pointers and primitives ==&gt; only one pointer map per method</li>
+          <li>there is nothing on evaluation stack at operations that may result in an invocation ==&gt; no need to statically interpret methods during GC </li>
+      </ul>
+  </li>
+</ul>
+</li>
+
+<li>
+<p><b>Suites</b></p>
+
+<p>A suite is a collection of classes. Each class in a suite only refers to other
+classes in the suite or to a class in a parent suite. That is, a chain of suites
+is a transitive closure of classes as shown below:
+
+<p><img border="0" src="../figures/SuiteChain.jpg" alt="Chain of suites" width="594" height="314"></p>
+
+The representation of classes in a suite is very compact
+as they are all prelinked to each other.  On average, suites are 
+one third of the size of class files.</p>  
+
+<p>Once a suite is <i>closed</i> (i.e. cannot
+have any more classes loaded into it), it is immutable.
+An immutable suite can  be saved to and loaded from a file. This results in a
+significantly reduced start up time when running an application from a suite
+(as opposed to a dynamically loaded set of classes).</p>
+</li>
+
+<li>
+<p><b>Isolates</b></p>
+
+<p>An <a href="http://www.jcp.org/en/jsr/detail?id=121">isolate</a> 
+is a mechanism by which an application is represented as an object. 
+In Squawk, one or more applications can run in the single JVM. 
+Conceptually, each application is completely isolated from all other applications. Given the
+immutability of suites, the isolate implementation in Squawk shares common suites between
+applications. This can significantly reduce the memory footprint of each application, which
+is particularly important in the embedded device space.</p>
+
+<p>In addition to the standard semantics of isolates, the Squawk implementation has
+one extra feature: <i>isolate migration</i>. That is, an isolate running on one Squawk VM instance
+can be paused, serialized to a file or over a network connection and restarted in another
+Squawk VM instance. This feature is a direct result of certain architectural choices made
+in Squawk such as using a green threaded model, representing all VM structures (including
+thread stacks) as objects and not implementing a general native code interface such as the JNI.
+The isolate migration mechanism also works between two VM instances running on platforms that
+have a different machine word endianess. A compelling use of this mechanism is for deploying
+a configured running application to a device running a Squawk VM that does not have the
+resources required for standard class file loading and Java object serialization.</p>
+
+</li>
+</ul>
+
+<h2><a name="pubs">Publications</a>
+</h2>
+<ul>
+  <li><a href="../docs/IFIP2005-Squawk.pdf">Squawk - A Java VM for Small (and
+    Larger) Devices</a>, Cristina Cifuentes, Slides for the IFIP WG 2.4 Meeting,
+    Jan 2005.</li>
+</ul>
+
+<h2><a name="team">The Team</a></h2>
+<p> Nik Shaylor (alumnus), Doug Simon (alumnus), Cristina Cifuentes, Derek 
+White, Eric Arseneau.</p>
+<p>Interns: David Liu (Dec 04-May 05), Martin Morissette (Jan-Jun 06), 
+Simon Long (Jan-May 06).
+</p>
+&nbsp;
+<hr>
+<p>Back to <a href="index.html">the Squawk Project</a></p>
+<hr>
+<p>Contact: <a href="mailto:eric.arseneau@sun.com">Eric Arseneau</a>
+<!-- End Main Body --></p>
+</body>
+</html>

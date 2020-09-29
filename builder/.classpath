@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="var" path="JDK_TOOLS"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/romizer"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mapper"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/j2se"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="var" path="SQUAWK3G/javamake.jar"/>
+	<classpathentry kind="output" path="eclipse"/>
+</classpath>

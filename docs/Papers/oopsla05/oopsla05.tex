@@ -1,0 +1,332 @@
+% This is sigproc-sp.tex -FILE FOR V2.6SP OF ACM_PROC_ARTICLE-SP.CLS
+% OCTOBER 2002
+%
+% It is an example file showing how to use the 'acm_proc_article-sp.cls' V2.6SP
+% LaTeX2e document class file for Conference Proceedings submissions.
+% ----------------------------------------------------------------------------------------------------------------
+% This .tex file (and associated .cls V2.6SP) *DOES NOT* produce:
+%       1) The Permission Statement
+%       2) The Conference (location) Info information
+%       3) The Copyright Line with ACM data
+%       4) Page numbering
+%
+%  However, both the CopyrightYear (default to 2002) and the ACM Copyright Data
+% (default to X-XXXXX-XX-X/XX/XX) can still be over-ridden by whatever the author
+% inserts into the source .tex file.
+% e.g.
+% \CopyrightYear{2003} will cause 2003 to appear in the copyright line.
+% \crdata{0-12345-67-8/90/12} will cause 0-12345-67-8/90/12 to appear in the copyright line.
+%
+% ---------------------------------------------------------------------------------------------------------------
+% It is an example which *does* use the .bib file (from which the .bbl file
+% is produced).
+% REMEMBER HOWEVER: After having produced the .bbl file,
+% and prior to final submission,
+% you need to 'insert'  your .bbl file into your source .tex file so as to provide
+% ONE 'self-contained' source file.
+%
+% Questions regarding SIGS should be sent to
+% Adrienne Griscti ---> griscti@acm.org
+%
+% Questions/suggestions regarding the guidelines, .tex and .cls files, etc. to
+% Gerald Murray ---> murray@acm.org
+%
+% For tracking purposes - this is V2.6SP - OCTOBER 2002
+
+%\documentclass{acm_proc_article-sp}
+\documentclass{sig-alt-sun}
+\usepackage{url}
+
+\begin{document}
+%
+% --- Author Metadata here ---
+\conferenceinfo{OOPSLA'05,}{October 16--20, 2005, San Diego, California, USA.}
+\CopyrightYear{2005}
+\crdata{1-59593-193-7/05/0010}
+% --- End of Author Metadata ---
+
+\title{The Squawk Virtual Machine: Java(TM) on the Bare Metal}
+\subtitle{[Extended Abstract]}
+
+\numberofauthors{2}
+\author{
+\alignauthor Doug Simon \\
+       \affaddr{Sun Microsystems Laboratories}\\
+       \affaddr{16 Network Drive}\\
+       \affaddr{Menlo Park, CA 94025}\\
+       \email{doug.simon@sun.com}
+\alignauthor Cristina Cifuentes \\
+       \affaddr{Sun Microsystems Laboratories}\\
+       \affaddr{16 Network Drive}\\
+       \affaddr{Menlo Park, CA 94025}\\
+       \email{cristina.cifuentes@sun.com}
+}
+\date{}
+\maketitle
+
+\begin{abstract}
+The Squawk virtual machine is a small Java(TM) VM written in 
+Java that runs without an OS on small devices.
+Squawk implements an isolate mechanism 
+%similar to JSR-121 
+allowing applications to be reified.  Multiple isolates 
+can run in the one VM, and isolates can be migrated between
+different instances of the VM.
+
+%Squawk can run multiple applications at once while
+%ensuring isolation between the applications. 
+%This results in saving precious space on small devices. 
+%The applications
+%themselves can be reified (i.e. applications can be treated
+%as first class objects) by means of an API similar to the JSR-121
+%Isolate API.  The applications can also be migrated between
+%different instances of the Squawk VM.
+\end{abstract}
+
+\category{D.3.3}{Programming Languages}{Language Constructs and Features}[classes and objects]
+\category{D.3.4}{Programming Languages}{Processors}[interpreters, run-time environments]
+
+\terms{Languages}
+
+
+\section{Introduction}
+
+Java virtual machines are typically written in C/C++. However, a number of
+complex processes performed by a JVM can be better expressed in Java, which
+offers features such as type safety, garbage collection and exception handling.
+This technique has been adopted by a few other JVMs, as well as VMs for
+other languages such as Smalltalk\cite{Inga97}. Implementing most of the
+VM in Java also eases the porting and debugging of the VM.  For small devices, 
+Java bytecodes typically offer a space saving over natively compiled
+code.
+
+%On a small device, it is desirable to reduce the redundancy of
+%operations performed by the OS and a JVM.  One means for achieving this is to
+%remove the OS completely and have the JVM provide all the required
+%functionality. Such an architecture requires providing a mechanismm
+%for handling interrupts and writing device drivers in Java.
+%
+%This extended abstract describes the architecture of the
+%Squawk Virtual Machine, a JVM written in Java that provides OS level 
+%functionality.
+
+On small devices, providing OS functionality in the JVM allows for 
+a simpler, more compact VM/OS that supports handling interrupts and
+writing device drivers in Java.  Other OS functionality such as networking
+stack and resource management need also be provided by the VM.  
+This extended abstract describes our approach at providing a solution 
+to this problem space.
+
+\vfill\eject
+\section{The Squawk Virtual Machine}
+
+The Squawk JVM is the result of an effort to write a CLDC compliant
+JVM in Java which also provides OS level mechanisms for small 
+devices.  
+Squawk came out of earlier similar efforts at Sun Labs on systems such 
+as the KVM~\cite{Taiv99}.
+A lot of its design was driven by the insight that performing up front
+transformations on Java bytecode into a more friendly execution format
+can greatly simplify other parts of the VM. 
+
+The Squawk architecture can be thought of as a split VM with the classfile
+preprocessor, called the {\em translator}, on one end and the execution
+engine on the other. The translator produces a more compact
+version of the input Java bytecodes that have the following properties: 
+1- symbolic references to other classes, fields and methods have been
+resolved;
+% into (indirect) pointers, object offsets and method table offsets respectively; 
+2- local variables are re-allocated such that slots 
+are partitioned to hold only pointer or non-pointer values; 
+%values or only non-pointer values; 
+%and 3- By means of inserted spills and fills, 
+and 3- the operand stack is guaranteed
+to be empty for certain instructions whose execution may result in a
+memory allocation. 
+
+The last two transformations greatly simplify garbage collectors, as each 
+method only requires a single pointer map and there is no need to scan the 
+operand stack.  
+%This contrasts with the mechanism used in other small VMs (e.g., KVM) where a pointer
+%map for the local variable slots and operand stack slots is recorded
+%at certain control flow points in each method.  Not only do these
+%{\em stackmaps} occupy more space, the collector must still
+%do a static execution of the code in a method if the current
+%execution point does not exactly correspond with one of the stackmaps.
+
+%The Squawk JVM optimizes a number of its core data structures to save space.
+%Non-array objects have a single word header and array objects have
+%a two word header. Methods are encoded as a special type of byte array
+%with a variable length object header containing the information required
+%for executing the method (i.e., exception tables, pointer to defining
+%class, number of parameters and local variables, etc.) and the body of the
+%array are the bytecodes themselves. Strings containing only ASCII
+%characters are encoded as a special type of byte array and all other
+%strings are encoded as a special type of char array. The symbolic
+%information for a set of classes (i.e., the names and signatures of fields and methods)
+%can be stripped to varying degrees by the translator, or discarded entirely
+%if they are never to be linked against by classes in a subsequent translation.
+%The symbolic information that is retained is encoded in a single string.
+
+\section{Object Memory Serialization \\ and Suite Files}
+
+The Squawk JVM includes a mechanism for serializing a graph of objects.
+It is very similar to the mark phase of a garbage collector
+and is actually implemented on top of the collector. All the pointers
+in the serialized object graph are relocated to canonical addresses.
+The serialized form can be
+deserialized back into a live object graph at a later time.
+
+The output of the translator is a collection of internal class
+data structures encapsulated in an object called a suite. The
+translator loads a transitive closure of classes. 
+%(a requirement for
+%the eager resolution of symbolic references), and every class
+%in a suite will only refer to other classes in the same suite or
+%to a previously loaded suite. That is, 
+Suites can form a chain where
+each subsequent suite only refers to previous suites.
+
+By combining the chained nature of suites with the object serialization
+mechanism, Squawk can save a set of loaded and translated
+classes to a file. These suite files can be loaded into a subsequent
+execution of Squawk, providing a faster alternative to
+standard classfile loading, greatly improving VM startup time.
+%Relocation is simply a single pass over the object memory using
+%a pointer map that was saved with the suite.
+
+The ability to save suites to files also enables Squawk to
+operate as a split VM for deployment of classfiles to devices that
+do not have the resources required for classfile loading. 
+On average, suite files are 35\% the size of classfiles.
+
+
+%\pagebreak
+\section{The Isolation Mechanism}
+
+Application isolation is implemented by placing application specific
+state such as class initialization state and class variables inside
+an {\em isolate}. The VM is always
+executing in the context of a single {\em current} isolate and
+access to this state is indirected to the relevant data in the
+isolate object.
+
+This indirection prevents two applications from interfering
+with each other via access to class variables or even by synchronizing
+on shared immutable data structures.
+
+\subsection*{Isolate Migration}
+
+The object memory serialization mechanism used to save suites to a file
+can also be used to externalize the running state of an application.
+This capability allows checkpointing of applications. It has also been
+used to achieve migration of a running isolate from one VM to another
+over a network connection. The serialization/deserialization process
+also works when migrating between machines with different endianness.
+
+However, true migration of an application's state is in general a very
+hard, if not impossible problem, given that a substantial amount of
+state may not be under complete control of the VM (e.g., open socket
+connections). The Squawk JVM sidesteps these issues by simply throwing
+a (catchable) exception if an application has open connections when
+an attempt is made to migrate it.
+
+\section{Interrupts}
+
+Squawk supports interrupts written in Java. 
+When an interrupt occurs, a low level 
+assembler routine disables the source of an interrupt and sets a bit in an
+interrupt status word (ISW). An interrupt handler thread
+is blocked on an event correlated with the bit in the ISW.
+At each reschedule point, the scheduler resumes the interrupt 
+handler thread which handles the interrupt, and reenables it. 
+
+% The driver is responsible for
+%clearing the relevant bits in the ISW and re-enabling the interrupt source.
+
+This design had an unpredictable latency due to the 
+non-preemptible garbage collector in Squawk. To address this,
+the VM was extended to support two separate contexts, each 
+with its own heap and processor state registers.
+Interrupts now cause an immediate switch to the single-threaded kernel context,
+which sequentially executes all the relevant blocked interrupt handlers. 
+{\em This mechanism is work in progress}. 
+
+\section{Case Study: Squawk on the Sun SPOT Platform}
+
+The Sun SPOT platform is an experimental wireless transducer 
+platform under development at Sun Labs.  Transducers; sensors combined
+with actuator mechanisms; are commonly used in sensors, robots, home
+appliances, motors, and other devices.
+The Sun SPOT platform includes
+an ARM-7 with 256 Kb of RAM and 2 Mb of flash, an 802.15.4 radio,
+and a general purpose sensor application board (with a 3D accelerometer, 
+a temperature sensor, a light sensor, two LEDs and two switches).  The device
+can be powered from a variety of power sources, including 1.5V batteries.
+
+The interpreted version of Squawk is deployed on the Sun SPOT platform. 
+%This version uses the polling-based interrupt architecture. 
+The core VM is 80~Kb of RAM and the 
+libraries (CLDC~1.0, 802.15.4, and hardware and sensor integration/control) 
+are 270~Kb of flash.  All device drivers and the 802.15.4 MAC layer are 
+written in Java. 
+
+The performance of Squawk on the Sun SPOT platform is comparable 
+to that of the KVM; an interpreted JVM written in C that runs on top of an OS.  
+Further, deployed Java applications in the form of suite files are about one 
+third the size of their classfile counterpart.
+
+
+\section{Comparison to Other Work}
+%Few Java VMs have been written in Java, even fewer can run on 
+%the bare metal without need for an underlying OS.  
+%Squawk is written in Java and runs on the bare metal on the ARM.  
+%Its small size allows it to run on wireless transducer devices, as 
+%well as cell phones. 
+
+IBM's Jikes Research Virtual Machine(RVM), formerly known as
+the Jalape\~{n}o virtual machine~\cite{Alpe99}, and the 
+Ovm project~\cite{Pala03}, are Java VMs written in Java. 
+%They both make use of the GNU classpath.  
+They both run desktop and server applications, and require an OS to run.  
+Ovm implements the real-time specification for Java (RTSJ) and
+has been used by Boeing to test run an unmanned plane. 
+
+JX~\cite{Golm02} and Jnode~\cite{Lohm05} are Java operating 
+systems that implement a Java VM as well as an OS.  Security 
+in the OS is provided through the typesafety of the Java bytecodes. 
+JX runs on the bare metal on x86 and PPC, and Jnode on the x86.
+They both access IDE disks, video cards and NICs.
+JX runs on cell phones and desktops.  
+Jnode runs desktop applications.
+
+\section{Conclusions}
+Squawk is a Java VM written in itself, designed for small devices, 
+and servicing hardware interrupts.
+Squawk is currently deployed on the Sun SPOT platform, an 
+ARM-7 based wireless transducer device where all device 
+drivers are written in Java.
+%The core VM is 80~KB of RAM and its 
+%performance is similar to that of the KVM, a JVM written in 
+%C that runs on top of an OS. 
+
+%Squawk has been designed to run on small devices. 
+Squawk implements an isolation mechanism, can run multiple 
+applications in the one VM, and can migrate applications 
+to another machine that runs the same VM. 
+
+\subsection*{Acknowledgments}
+The original design and implementation of Squawk was
+due to Nik Shaylor.
+For more information on Squawk refer to 
+\url{http://research.sun.com/projects/squawk}
+
+%We would like to thank Olaf Manczak, Randy Smith, Andrew Crouch
+%and David Liu for suggestions on improving the presentation
+%of the poster, and Nancy Snyder for helping with the poster's 
+%graphics and layout.
+
+\bibliographystyle{abbrv}
+\bibliography{vm}
+
+\end{document}

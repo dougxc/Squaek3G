@@ -1,0 +1,37 @@
+x86/Red Hat 8 Linux gcc 3.2, Java 1.5.0, Squawk3G (Feb 2005; compiled with gcc 3.2 and Java 1.5.0)
+x86/Pentium 4 M (20 stage processor pipeline)
+Benchmark             Average Time(ms)
+                     Squawk (o2 + mac)  Squawk (o2)  Squawk (mac)  Squawk (no opts)
+gibbons                      106.6       154.4         343.6           769.4
+gibbons_final                105.9       152.2         342.4           767.5
+gibbons_no_switch            122.1       183.5         394.9           906.9
+deutsch_no_acc               164.5       242.5         555.2          1286.6
+deutsch_acc_virtua           298.5         402        1040.6          2447.1
+deutsch_acc_final            300.9       404.1        1042.2          2450.6
+deutsch_acc_interface        605.9       754.3        1944.4          4496.4
+                                                                                                                                      
+x86 P4/Windows XP Pro gcc 3.3.1, Java 1.4.2, Squawk3G (Feb 2005; compiled with gcc 3.3.1 and Java 1.4.2)
+x86/Pentium 4 M (20 stage processor pipeline)
+Benchmark             Average Time(ms)
+                     Squawk (o2 + mac)  Squawk (o2) Squawk (mac)  Squawk (no opts)
+gibbons                       97.1       165.3         356.5          1348.9
+gibbons_final                 96.2       165.2         356.5          1349.0
+gibbons_no_switch            114.2       198.3         417.6          1591.3
+deutsch_no_acc               161.2       264.4         597.8          2237.2
+deutsch_acc_virtual          313.5       456.6        1097.6          4314.2
+deutsch_acc_final            313.4       460.7        1094.6          4314.2
+deutsch_acc_interface        568.8       851.2        2040.9          7939.4
+                                                                                                                                      
+x86/Windows gcc 3.3.1 non optimized (-O0), g++ 3.3.1 (cygwin) non optimized (-O0),
+Java 1.4.2_07 interpreted only (-Xint) and Squawk3G (Feb, 2005; compiled with cl (Microsoft C compiler) and Java 1.4.2_07)
+x86/Pentium M (10-20 stage processor pipeline)
+Benchmark                             Average Time (ms)
+                     Squawk (o2 + mac) Squawk (o2)  Squawk (mac)  Squawk (no opts)
+gibbons                   52.1           98.2         220.3           709.0
+gibbons_final             52.0           97.1         214.3           711.0
+gibbons_no_switch         59.1          121.2         263.4           846.2
+deutsch_no_acc            87.1          165.3         365.5          1196.7
+deutsch_acc_virtual      175.3          302.4         649.0          2284.3
+deutsch_acc_final        177.2          300.5         641.9          2291.3
+deutsch_acc_interface    309.5          517.7        1171.7          4165.0
+

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <!--JBuilder Library Definition File-->
+  <fullname>bcel-5.1</fullname>
+  <class>
+    <path>[../../tools/bcel-5.1.jar]</path>
+  </class>
+  <source>
+    <path>[../../tools/bcel-5.1-src.jar]</path>
+  </source>
+  <lastmodsaved>1110249683219</lastmodsaved>
+</library>

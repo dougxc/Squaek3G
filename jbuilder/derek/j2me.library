@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <!--JBuilder Library Definition File-->
+  <fullname>j2me</fullname>
+  <class>
+    <path>../../j2me/classes</path>
+  </class>
+  <source>
+    <path>../../j2me/src</path>
+    <path>../../define/src</path>
+  </source>
+  <lastmodsaved>1112645288070</lastmodsaved>
+</library>

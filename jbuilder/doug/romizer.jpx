@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--JBuilder XML Project-->
+<project>
+  <property category="generalFormatting" name="blockIndent" value="4"/>
+  <property category="generalFormatting" name="tabSize" value="4"/>
+  <property category="generalFormatting2" name="blockIndent" value="4"/>
+  <property category="generalFormatting2" name="overrideBasicFormatting" value="1"/>
+  <property category="generalFormatting2" name="tabSize" value="4"/>
+  <property category="idl" name="ProcessIDL" value="false"/>
+  <property category="javaFormatting" name="packagePrefixGroups" value="java;javax;BLANK_LINE;java.awt;javax.swing;BLANK_LINE;org;(*)"/>
+  <property category="javaFormatting" name="packageThreshold" value="0"/>
+  <property category="javadoc" name="custom.tags.1" value="todo;a;To Do:"/>
+  <property category="module" name="ProjectConvertedToEnsureModulesHaveSupportedFeatures" value="1"/>
+  <property category="module" name="ProjectConvertedToUseFilesAndDependenciesAsDefaultContent" value="1"/>
+  <property category="module" name="ProjectConvertedToUseProperModuleDefaults" value="1"/>
+  <property category="module" name="projectConvertedFromModuleExtensionsToModuleFileTypes" value="1"/>
+  <property category="runtime" name="ConfigurationCount" value="7"/>
+  <property category="runtime.0" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.0" name="ConfigurationName" value="romize bad tck (unix)"/>
+  <property category="runtime.0" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.0" name="application.class" value="com.sun.squawk.Romizer"/>
+  <property category="runtime.0" name="application.parameters" value="-o:bad_tck -exclude:squawk.exclude -cp:j2me/j2meclasses:translator/j2meclasses:tck/j2meclasses:tck/tck-1.1.jar j2me/j2meclasses javasoft.sqe.tests.vm.fp.fpm025.fpm02501m1.fpm02501m1c"/>
+  <property category="runtime.0" name="application.vmparameters" value=" -Xbootclasspath/a:j2se/classes:romizer/classes:j2me/j2meclasses:translator/j2meclasses:tools/bcel-5.1.jar"/>
+  <property category="runtime.1" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.1" name="ConfigurationName" value="romize translator (unix)"/>
+  <property category="runtime.1" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.1" name="application.class" value="com.sun.squawk.Romizer"/>
+  <property category="runtime.1" name="application.parameters" value="-jars -o:squawk -cp:j2me/j2meclasses:translator/j2meclasses -arch:X86 -endian:little j2me/j2meclasses translator/j2meclasses"/>
+  <property category="runtime.1" name="application.vmparameters" value=" -Xbootclasspath/a:j2se/classes:romizer/classes:j2me/classes:translator/classes"/>
+  <property category="runtime.2" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.2" name="ConfigurationName" value="romize j2me (unix)"/>
+  <property category="runtime.2" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.2" name="application.class" value="com.sun.squawk.Romizer"/>
+  <property category="runtime.2" name="application.parameters" value="-jars -o:squawk -cp:j2me/j2meclasses -arch:X86 -endian:little j2me/j2meclasses"/>
+  <property category="runtime.2" name="application.vmparameters" value=" -Xbootclasspath/a:tools/bcel-5.1.jar:j2se/classes:romizer/classes:j2me/classes:translator/classes"/>
+  <property category="runtime.3" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.3" name="ConfigurationName" value="romize j2me translator graphics"/>
+  <property category="runtime.3" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.3" name="application.class" value="com.sun.squawk.Romizer"/>
+  <property category="runtime.3" name="application.parameters" value="-o:squawk -cp:j2me/j2meclasses:translator/j2meclasses:graphics/j2meclasses -arch:X86 -endian:little -jars j2me/j2meclasses translator/j2meclasses graphics/j2meclasses"/>
+  <property category="runtime.3" name="application.vmparameters" value="-cp j2se/classes:romizer/classes:j2me/classes:translator/classes"/>
+  <property category="runtime.4" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.4" name="ConfigurationName" value="romize j2me -- translator -- graphics (unix)"/>
+  <property category="runtime.4" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.4" name="application.class" value="com.sun.squawk.Romizer"/>
+  <property category="runtime.4" name="application.parameters" value="-o:squawk -cp:j2me/j2meclasses -arch:PPC -endian:big j2me/j2meclasses -- -cp:translator/j2meclasses -o:translator translator/j2meclasses -- -cp:graphics/j2meclasses -o:graphics graphics/j2meclasses"/>
+  <property category="runtime.4" name="application.vmparameters" value=" -Xbootclasspath/a:tools/bcel-5.1.jar:j2se/classes:romizer/classes:j2me/classes:translator/classes"/>
+  <property category="runtime.5" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.5" name="ConfigurationName" value="romize tck (win)"/>
+  <property category="runtime.5" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.5" name="application.class" value="com.sun.squawk.Romizer"/>
+  <property category="runtime.5" name="application.parameters" value="-cp:j2me/j2meclasses;translator/j2meclasses;tck/j2meclasses j2me/j2meclasses translator/j2meclasses tck/j2meclasses"/>
+  <property category="runtime.5" name="application.vmparameters" value=" -Xbootclasspath/a:j2se\classes;romizer\classes;j2me\classes;translator\classes"/>
+  <property category="runtime.6" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.6" name="ConfigurationName" value="romize squawk_rt.jar (unix)"/>
+  <property category="runtime.6" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.6" name="application.class" value="com.sun.squawk.Romizer"/>
+  <property category="runtime.6" name="application.parameters" value="-cp:squawk_rt.jar -arch:X86 squawk_rt.jar"/>
+  <property category="runtime.6" name="application.vmparameters" value=" -Xbootclasspath/a:tools/bcel-5.1.jar:j2se/classes:romizer/classes:j2me/classes:translator/classes"/>
+  <property category="runtime.7" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.7" name="ConfigurationName" value="romize spot SDK (unix)"/>
+  <property category="runtime.7" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.7" name="application.class" value="com.sun.squawk.Romizer"/>
+  <property category="runtime.7" name="application.parameters" value="-o:squawk -cp:j2me/j2meclasses:/Users/dsimon/sunspot-sdk/lib/spots_rt.jar -arch:PPC -endian:big j2me/j2meclasses /Users/dsimon/sunspot-sdk/lib/spots_rt.jar"/>
+  <property category="runtime.7" name="application.vmparameters" value="-Xbootclasspath/a:j2se/classes:romizer/classes:j2me/classes:translator/classes:tools/bcel-5.1.jar"/>
+  <property category="serverservices" name="disabled.services" value="connector;jdatastore"/>
+  <property category="serverservices" name="single.server.name" value="Tomcat 4.0"/>
+  <property category="sys" name="AuthorLabel" value="@author"/>
+  <property category="sys" name="BackupPath" value="bak"/>
+  <property category="sys" name="CheckStable" value="1"/>
+  <property category="sys" name="Company" value=""/>
+  <property category="sys" name="CompanyLabel" value="Company:"/>
+  <property category="sys" name="Copyright" value="Copyright (c) 2003"/>
+  <property category="sys" name="CopyrightLabel" value="Copyright:"/>
+  <property category="sys" name="DefaultPath" value="../../romizer/src"/>
+  <property category="sys" name="Description" value=""/>
+  <property category="sys" name="DescriptionLabel" value="Description:"/>
+  <property category="sys" name="DocPath" value="doc"/>
+  <property category="sys" name="ExcludeClassEnabled" value="0"/>
+  <property category="sys" name="IncludeTestPath" value="1"/>
+  <property category="sys" name="InstanceVisibility" value="2"/>
+  <property category="sys" name="JDK" value="java version 1.5.0_02-b09"/>
+  <property category="sys" name="JvmVersion" value="1.2"/>
+  <property category="sys" name="LastTag" value="0"/>
+  <property category="sys" name="Libraries" value="JDK Runtime Library;bcel-5.1;j2me;translator;j2se"/>
+  <property category="sys" name="MakeStable" value="0"/>
+  <property category="sys" name="OutPath" value="output/romizer/classes"/>
+  <property category="sys" name="SourcePath" value="../../romizer/src"/>
+  <property category="sys" name="SourceVersion" value="1.4"/>
+  <property category="sys" name="TestPath" value="../../romizer/src"/>
+  <property category="sys" name="Title" value=""/>
+  <property category="sys" name="TitleLabel" value="Title:"/>
+  <property category="sys" name="Version" value="1.0"/>
+  <property category="sys" name="VersionLabel" value="@version"/>
+  <property category="sys" name="WorkingDirectory" value="../../"/>
+  <property category="sys" name="max.package.levels" value="6"/>
+  <node name="src" type="NavigationDirectory">
+    <property category="directorynode" name="pattern" value="*.java"/>
+    <property category="directorynode" name="showSubdirectories" value="1"/>
+    <property category="directorynode" name="url" value="C%%|/work/Squawk3G/romizer/src"/>
+    <property category="directorynode" name="usePatternFilter" value="1"/>
+  </node>
+</project>

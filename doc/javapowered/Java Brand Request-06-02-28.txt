@@ -1,0 +1,36 @@
+=================================================
+PRODUCT INFORMATION
+=================================================
+Company Contact: Eric Arseneau
+
+Company Name: Sun Microsystems
+
+Contact Information: eric.arseneau@sun.com, +1 858 231-9337
+
+Product Name: Squawk
+
+Product Version: 3G
+
+Ship Date: N/A
+The platforms we are requesting are currently not intended to be released just yet.  The intent is to get the Squawk technology certified, in order to simplify the certification of the Sun SPOT product which incorporates the Squawk technology and will be released/announced on March 4, 2006.
+
+Product Description:
+Squawk is a research VM implemented in and on Java.  The intent is for Squawk to be an enabler to port Java to a variety of small embedded platforms quickly and easily.
+
+
+=================================================
+TECHNOLOGY INFORMATION
+=================================================
+Java Technology: CLDC
+
+
+Technology level: 1.1
+
+TCK level: cldc_tck-1_1-fcs-b15-20_mar_2003
+
+Exclude List Version: cldc_tck-1_1-upd-exc-16_dec_2005, # SCCS: 1.24 12/16/05
+
+Hardware achitecture: x86
+
+Operating System: Windows
+

@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head><!--
+  Copyright (c) 2005 Sun Microsystems, Inc. All Rights Reserved.
+--></head>
+
+<body bgcolor="white">Tests the ARM machine code assembler and disassembler used by the compiler for the Squawk Java virtual 
+machine. 
+<p>
+There are two types of testing for the assembler/disassembler. There is a suite of JUnit tests for 
+each assembler mnemonic and feature, for example <code>MovTest</code> and <code>AddrPatchingTest</code>.
+These tests are collected into a suite in the <code>ArmTests</code> class and can be executed using
+the builder as follows:
+<pre>
+    java -jar build.jar arm_asm_tests
+</pre>
+<p>
+The other tests are functional tests that produce ARM binary images. Examples of such tests are 
+<code>HelloWorld</code> which prints a "Hello world" message, and <code>PrintDecimals</code> which
+uses code in the <code>ARMLibrary</code> class to print decimal and hexadecimal numbers. These tests
+make use of the <a href="../../../../../../../../../doc/ARMDemonRDPProtocol.pdf">Demon RDP Protocol</a>
+(see section 4.3, page 11) for input/output. The test code can be executed and its output run 
+through the GNU ARM simulator as follows:
+<pre>
+    java -cp compiler/classes;j2me/classes;compilertests/classes com.sun.squawk.compiler.asm.arm.tests.HelloWorld
+    arm-elf-objcopy -I binary -O elf32-bigarm -B ARM --adjust-vma 0x8000 --set-section-flags .data=alloc,code,readonly HelloWorld.bin HelloWorld.elf
+    arm-elf-run HelloWorld.elf
+</pre></body>
+</html>

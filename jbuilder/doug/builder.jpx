@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--JBuilder XML Project-->
+<project>
+  <property category="debug.0" name="BuildTargetOnDebug" value="&lt;None&gt;"/>
+  <property category="debug.3" name="BuildTargetOnDebug" value="&lt;None&gt;"/>
+  <property category="debug.4" name="BuildTargetOnDebug" value="&lt;None&gt;"/>
+  <property category="debug.5" name="BuildTargetOnDebug" value="&lt;None&gt;"/>
+  <property category="debug.8" name="BuildTargetOnDebug" value="&lt;None&gt;"/>
+  <property category="debug.9" name="BuildTargetOnDebug" value="&lt;None&gt;"/>
+  <property category="generalFormatting" name="blockIndent" value="4"/>
+  <property category="generalFormatting" name="tabSize" value="4"/>
+  <property category="generalFormatting2" name="blockIndent" value="4"/>
+  <property category="generalFormatting2" name="overrideBasicFormatting" value="1"/>
+  <property category="generalFormatting2" name="tabSize" value="4"/>
+  <property category="java.sapient" name="ACE" value="false"/>
+  <property category="java.sapient" name="AFLV" value="true"/>
+  <property category="java.sapient" name="AFP" value="false"/>
+  <property category="java.sapient" name="ASMDCN" value="true"/>
+  <property category="java.sapient" name="ASMO" value="true"/>
+  <property category="java.sapient" name="BSMC" value="true"/>
+  <property category="java.sapient" name="BTJC" value="false"/>
+  <property category="java.sapient" name="CA" value="false"/>
+  <property category="java.sapient" name="CEV" value="false"/>
+  <property category="java.sapient" name="CFPV" value="false"/>
+  <property category="java.sapient" name="CIUCFL" value="true"/>
+  <property category="java.sapient" name="CQS" value="false"/>
+  <property category="java.sapient" name="CSR" value="true"/>
+  <property category="java.sapient" name="CVSBF" value="true"/>
+  <property category="java.sapient" name="EIAV" value="false"/>
+  <property category="java.sapient" name="EJB_CL" value="false"/>
+  <property category="java.sapient" name="EJB_CONSOLE" value="false"/>
+  <property category="java.sapient" name="EJB_ENTITY" value="false"/>
+  <property category="java.sapient" name="EJB_FDESCR" value="false"/>
+  <property category="java.sapient" name="EJB_FILES" value="false"/>
+  <property category="java.sapient" name="EJB_HOME" value="false"/>
+  <property category="java.sapient" name="EJB_IO" value="false"/>
+  <property category="java.sapient" name="EJB_JDBC" value="false"/>
+  <property category="java.sapient" name="EJB_MESSAGE" value="false"/>
+  <property category="java.sapient" name="EJB_NAMES" value="false"/>
+  <property category="java.sapient" name="EJB_NATIVE" value="false"/>
+  <property category="java.sapient" name="EJB_OBJECT" value="false"/>
+  <property category="java.sapient" name="EJB_REFL" value="false"/>
+  <property category="java.sapient" name="EJB_SEC" value="false"/>
+  <property category="java.sapient" name="EJB_SECOBJ" value="false"/>
+  <property category="java.sapient" name="EJB_SESSION" value="false"/>
+  <property category="java.sapient" name="EJB_SFACT" value="false"/>
+  <property category="java.sapient" name="EJB_SOCKET" value="false"/>
+  <property category="java.sapient" name="EJB_SUBST" value="false"/>
+  <property category="java.sapient" name="EJB_THREADS" value="false"/>
+  <property category="java.sapient" name="EOBA" value="true"/>
+  <property category="java.sapient" name="EVC" value="true"/>
+  <property category="java.sapient" name="HIF" value="true"/>
+  <property category="java.sapient" name="HISM" value="true"/>
+  <property category="java.sapient" name="HN" value="true"/>
+  <property category="java.sapient" name="ICSBF" value="false"/>
+  <property category="java.sapient" name="IFM" value="true"/>
+  <property category="java.sapient" name="ILC" value="false"/>
+  <property category="java.sapient" name="IMCM" value="true"/>
+  <property category="java.sapient" name="IMMD" value="true"/>
+  <property category="java.sapient" name="LF" value="false"/>
+  <property category="java.sapient" name="LMC" value="false"/>
+  <property category="java.sapient" name="LNU" value="true"/>
+  <property category="java.sapient" name="MCP" value="true"/>
+  <property category="java.sapient" name="MCS" value="true"/>
+  <property category="java.sapient" name="MLOWP" value="false"/>
+  <property category="java.sapient" name="MNU" value="true"/>
+  <property category="java.sapient" name="MSOL" value="true"/>
+  <property category="java.sapient" name="MVDSN" value="false"/>
+  <property category="java.sapient" name="NC" value="true"/>
+  <property category="java.sapient" name="NCLS" value="true"/>
+  <property category="java.sapient" name="NFSF" value="false"/>
+  <property category="java.sapient" name="NLC" value="false"/>
+  <property category="java.sapient" name="NOIS" value="false"/>
+  <property category="java.sapient" name="ODCM" value="false"/>
+  <property category="java.sapient" name="OHCE" value="true"/>
+  <property category="java.sapient" name="OIM" value="true"/>
+  <property category="java.sapient" name="ONAMAM" value="true"/>
+  <property category="java.sapient" name="ONE" value="true"/>
+  <property category="java.sapient" name="OPM" value="true"/>
+  <property category="java.sapient" name="OSNBU" value="false"/>
+  <property category="java.sapient" name="OWS" value="false"/>
+  <property category="java.sapient" name="PCO" value="true"/>
+  <property category="java.sapient" name="PDBB" value="false"/>
+  <property category="java.sapient" name="PFC" value="false"/>
+  <property category="java.sapient" name="PIFS" value="false"/>
+  <property category="java.sapient" name="PJDC" value="false"/>
+  <property category="java.sapient" name="PMSNT" value="false"/>
+  <property category="java.sapient" name="PN" value="false"/>
+  <property category="java.sapient" name="PPA" value="false"/>
+  <property category="java.sapient" name="PPCF" value="true"/>
+  <property category="java.sapient" name="PSIB" value="true"/>
+  <property category="java.sapient" name="RIP" value="false"/>
+  <property category="java.sapient" name="SBC" value="true"/>
+  <property category="java.sapient" name="SEB" value="false"/>
+  <property category="java.sapient" name="SL" value="false"/>
+  <property category="java.sapient" name="SSSIDC" value="false"/>
+  <property category="java.sapient" name="SU" value="true"/>
+  <property category="java.sapient" name="TMSSC" value="false"/>
+  <property category="java.sapient" name="UAAO" value="true"/>
+  <property category="java.sapient" name="UC" value="true"/>
+  <property category="java.sapient" name="UCVN" value="false"/>
+  <property category="java.sapient" name="UE" value="true"/>
+  <property category="java.sapient" name="UL" value="true"/>
+  <property category="java.sapient" name="ULVFP" value="true"/>
+  <property category="java.sapient" name="UMM" value="true"/>
+  <property category="java.sapient" name="URSP" value="true"/>
+  <property category="javaFormatting" name="alignMultilineAssign" value="1"/>
+  <property category="javaFormatting" name="arrayInitDataOnNewLine" value="0"/>
+  <property category="javaFormatting" name="catchOnNewLine" value="0"/>
+  <property category="javaFormatting" name="elseOnNewLine" value="0"/>
+  <property category="javaFormatting" name="extendsOnNewLine" value="0"/>
+  <property category="javaFormatting" name="finallyOnNewLine" value="0"/>
+  <property category="javaFormatting" name="implementsOnNewLine" value="0"/>
+  <property category="javaFormatting" name="packagePrefixGroups" value="java;javax;BLANK_LINE;java.awt;javax.swing;BLANK_LINE;org;(*)"/>
+  <property category="javaFormatting" name="whileOnNewLine" value="0"/>
+  <property category="javaFormatting" name="wrapAtColumn" value="180"/>
+  <property category="javadoc" name="custom.tags.1" value="todo;a;To Do:"/>
+  <property category="runtime" name="ConfigurationCount" value="9"/>
+  <property category="runtime" name="DefaultConfiguration" value="7"/>
+  <property category="runtime.0" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.0" name="ConfigurationName" value="build j2me"/>
+  <property category="runtime.0" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.0" name="application.class" value="com.sun.squawk.builder.Build"/>
+  <property category="runtime.0" name="application.parameters" value="j2me"/>
+  <property category="runtime.0" name="application.vmparameters" value="-cp build.jar"/>
+  <property category="runtime.0" name="appserver.parameters" value=""/>
+  <property category="runtime.0" name="appserver.servername" value=""/>
+  <property category="runtime.0" name="appserver.vmparameters" value=""/>
+  <property category="runtime.0" name="server.arguments" value=""/>
+  <property category="runtime.0" name="server.disableServerClassTracing" value="0"/>
+  <property category="runtime.0" name="server.instance.name" value=""/>
+  <property category="runtime.0" name="server.name" value="Tomcat 3.3"/>
+  <property category="runtime.0" name="server.vmparameters" value=""/>
+  <property category="runtime.0" name="test.harness" value="com.borland.jbuilder.unittest.JBTestRunner"/>
+  <property category="runtime.1" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.1" name="ConfigurationName" value="NativeGen 0"/>
+  <property category="runtime.1" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.1" name="application.class" value="NativeGen"/>
+  <property category="runtime.1" name="application.parameters" value="0"/>
+  <property category="runtime.1" name="application.vmparameters" value="-Xbootclasspath/a:j2me/classes"/>
+  <property category="runtime.2" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.2" name="ConfigurationName" value="FileSet"/>
+  <property category="runtime.2" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.2" name="application.class" value="com.sun.squawk.builder.util.FileSet"/>
+  <property category="runtime.2" name="application.parameters" value=". :and :pfx debug. :sfx .log"/>
+  <property category="runtime.3" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.3" name="ConfigurationName" value="build j2se"/>
+  <property category="runtime.3" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.3" name="application.class" value="com.sun.squawk.builder.Build"/>
+  <property category="runtime.3" name="application.parameters" value="-verbose j2se"/>
+  <property category="runtime.3" name="appserver.parameters" value=""/>
+  <property category="runtime.3" name="appserver.servername" value=""/>
+  <property category="runtime.3" name="appserver.vmparameters" value=""/>
+  <property category="runtime.3" name="server.arguments" value=""/>
+  <property category="runtime.3" name="server.disableServerClassTracing" value="0"/>
+  <property category="runtime.3" name="server.instance.name" value=""/>
+  <property category="runtime.3" name="server.name" value="Tomcat 3.3"/>
+  <property category="runtime.3" name="server.vmparameters" value=""/>
+  <property category="runtime.3" name="test.harness" value="com.borland.jbuilder.unittest.JBTestRunner"/>
+  <property category="runtime.4" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.4" name="ConfigurationName" value="run regression"/>
+  <property category="runtime.4" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.4" name="application.class" value="com.sun.squawk.builder.Build"/>
+  <property category="runtime.4" name="application.parameters" value="-info regression -production"/>
+  <property category="runtime.4" name="application.vmparameters" value="-cp build.jar"/>
+  <property category="runtime.4" name="appserver.parameters" value=""/>
+  <property category="runtime.4" name="appserver.servername" value=""/>
+  <property category="runtime.4" name="appserver.vmparameters" value=""/>
+  <property category="runtime.4" name="server.arguments" value=""/>
+  <property category="runtime.4" name="server.disableServerClassTracing" value="0"/>
+  <property category="runtime.4" name="server.instance.name" value=""/>
+  <property category="runtime.4" name="server.name" value="Tomcat 3.3"/>
+  <property category="runtime.4" name="server.vmparameters" value=""/>
+  <property category="runtime.4" name="test.harness" value="com.borland.jbuilder.unittest.JBTestRunner"/>
+  <property category="runtime.5" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.5" name="ConfigurationName" value="build romizer"/>
+  <property category="runtime.5" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.5" name="application.class" value="com.sun.squawk.builder.Build"/>
+  <property category="runtime.5" name="application.parameters" value="-verbose romizer"/>
+  <property category="runtime.5" name="application.vmparameters" value="-cp build.jar"/>
+  <property category="runtime.5" name="appserver.parameters" value=""/>
+  <property category="runtime.5" name="appserver.servername" value=""/>
+  <property category="runtime.5" name="appserver.vmparameters" value=""/>
+  <property category="runtime.5" name="server.arguments" value=""/>
+  <property category="runtime.5" name="server.disableServerClassTracing" value="0"/>
+  <property category="runtime.5" name="server.instance.name" value=""/>
+  <property category="runtime.5" name="server.name" value="Tomcat 3.3"/>
+  <property category="runtime.5" name="server.vmparameters" value=""/>
+  <property category="runtime.5" name="test.harness" value="com.borland.jbuilder.unittest.JBTestRunner"/>
+  <property category="runtime.6" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.6" name="ConfigurationName" value="run romize"/>
+  <property category="runtime.6" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.6" name="application.class" value="com.sun.squawk.builder.Build"/>
+  <property category="runtime.6" name="application.parameters" value="romize -h"/>
+  <property category="runtime.6" name="application.vmparameters" value="-cp build.jar"/>
+  <property category="runtime.7" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.7" name="ConfigurationName" value="run rom"/>
+  <property category="runtime.7" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.7" name="application.class" value="com.sun.squawk.builder.Build"/>
+  <property category="runtime.7" name="application.parameters" value="-info rom"/>
+  <property category="runtime.7" name="application.vmparameters" value="-cp build.jar"/>
+  <property category="runtime.8" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.8" name="ConfigurationName" value="makeapi"/>
+  <property category="runtime.8" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.8" name="application.class" value="com.sun.squawk.builder.Build"/>
+  <property category="runtime.8" name="application.parameters" value="makeapi squawk.suite.api j2me/preprocessed API"/>
+  <property category="runtime.8" name="application.vmparameters" value="-cp build.jar"/>
+  <property category="runtime.8" name="appserver.parameters" value=""/>
+  <property category="runtime.8" name="appserver.servername" value=""/>
+  <property category="runtime.8" name="appserver.vmparameters" value=""/>
+  <property category="runtime.8" name="server.arguments" value=""/>
+  <property category="runtime.8" name="server.disableServerClassTracing" value="0"/>
+  <property category="runtime.8" name="server.instance.name" value=""/>
+  <property category="runtime.8" name="server.name" value="Tomcat 3.3"/>
+  <property category="runtime.8" name="server.vmparameters" value=""/>
+  <property category="runtime.8" name="test.harness" value="com.borland.jbuilder.unittest.JBTestRunner"/>
+  <property category="runtime.9" name="BuildTargetOnRun" value="&lt;None&gt;"/>
+  <property category="runtime.9" name="ConfigurationName" value="buildBootstrap"/>
+  <property category="runtime.9" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.9" name="application.class" value="com.sun.squawk.builder.Build"/>
+  <property category="runtime.9" name="application.parameters" value="-verbose -plugins:arm/squawk-builder-plugins/plugin.properties buildBootstrap"/>
+  <property category="runtime.9" name="application.vmparameters" value="-cp build.jar"/>
+  <property category="runtime.9" name="appserver.parameters" value=""/>
+  <property category="runtime.9" name="appserver.servername" value=""/>
+  <property category="runtime.9" name="appserver.vmparameters" value=""/>
+  <property category="runtime.9" name="server.arguments" value=""/>
+  <property category="runtime.9" name="server.disableServerClassTracing" value="0"/>
+  <property category="runtime.9" name="server.instance.name" value=""/>
+  <property category="runtime.9" name="server.name" value="Tomcat 3.3"/>
+  <property category="runtime.9" name="server.vmparameters" value=""/>
+  <property category="runtime.9" name="test.harness" value="com.borland.jbuilder.unittest.JBTestRunner"/>
+  <property category="serverservices" name="disabled.services" value="connector;jdatastore"/>
+  <property category="sys" name="AuthorLabel" value="@author"/>
+  <property category="sys" name="BackupPath" value="bak"/>
+  <property category="sys" name="CheckStable" value="1"/>
+  <property category="sys" name="Company" value=""/>
+  <property category="sys" name="CompanyLabel" value="Company:"/>
+  <property category="sys" name="CompileOnDebug" value="0"/>
+  <property category="sys" name="CompileOnRun" value="0"/>
+  <property category="sys" name="Copyright" value="Copyright (c) 2002"/>
+  <property category="sys" name="CopyrightLabel" value="Copyright:"/>
+  <property category="sys" name="DefaultPath" value="../../builder/src"/>
+  <property category="sys" name="Description" value=""/>
+  <property category="sys" name="DescriptionLabel" value="Description:"/>
+  <property category="sys" name="DocPath" value="doc"/>
+  <property category="sys" name="ExcludeClass" value="com.sun.squawk.builder.tasks.Preprocessor"/>
+  <property category="sys" name="ExcludeClassEnabled" value="0"/>
+  <property category="sys" name="IncludeTestPath" value="1"/>
+  <property category="sys" name="JDK" value="java version 1.5.0_02-56"/>
+  <property category="sys" name="LastTag" value="0"/>
+  <property category="sys" name="Libraries" value="javamake;JDK5 Tools"/>
+  <property category="sys" name="MakeStable" value="0"/>
+  <property category="sys" name="OutPath" value="output/builder/classes"/>
+  <property category="sys" name="SourcePath" value="../../builder/src"/>
+  <property category="sys" name="SourceVersion" value="1.4"/>
+  <property category="sys" name="TestPath" value="../../builder/src"/>
+  <property category="sys" name="Title" value=""/>
+  <property category="sys" name="TitleLabel" value="Title:"/>
+  <property category="sys" name="Version" value="1.0"/>
+  <property category="sys" name="VersionLabel" value="@version"/>
+  <property category="sys" name="WorkingDirectory" value="../../"/>
+  <property category="sys" name="max.package.levels" value="6"/>
+</project>

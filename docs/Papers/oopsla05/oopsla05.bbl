@@ -1,0 +1,42 @@
+\begin{thebibliography}{1}
+
+\bibitem{Alpe99}
+B.~Alpern and D.~A. et~al.
+\newblock Implementing {J}alape\~{n}o in {J}ava.
+\newblock In {\em Proceedings {ACM SIGPLAN} Conference on Object-Oriented
+  Programming Systems, Languages, and Applications (OOPSLA)}, Denver, Colorado,
+  Nov. 1999. {ACM} Press.
+
+\bibitem{Golm02}
+M.~Golm, M.~Felser, C.~Wawersich, and J.~Kleinoeder.
+\newblock the {JX} operating system.
+\newblock In {\em Proceedings of the {USENIX} Annual Technical Conference},
+  pages 45--58, Monterey, CA, June 2002.
+
+\bibitem{Inga97}
+D.~Ingalls, T.~Kaehler, J.~Maloney, S.~Wallace, and A.~Kay.
+\newblock Back to the future: The story of {S}queak, a practical {S}malltalk
+  written in itself.
+\newblock In {\em Proceedings {ACM SIGPLAN} Conference on Object-Oriented
+  Programming Systems, Languages, and Applications (OOPSLA)}. {ACM} Press, Oct.
+  1997.
+
+\bibitem{Lohm05}
+S.~Lohmeier.
+\newblock Jini on the {J}node {J}ava {OS}.
+\newblock Online article at \url{http://monochromata.de/jnodejni.html}, June
+  2005.
+
+\bibitem{Pala03}
+K.~Palacz, J.~Baker, C.~Flack, C.~Grothorff, H.~Yamauchi, and J.~Vitek.
+\newblock Engineering a customizable intermediate representation.
+\newblock In {\em Proceedings of {IVME}}, 2003.
+
+\bibitem{Taiv99}
+A.~Taivalsaari, B.~Bill, and D.~Simon.
+\newblock The {S}potless system: Implementing a {J}ava({TM}) system for the
+  {P}alm connected organizer.
+\newblock Technical Report {SMLI TR}-99-73, Sun Microsystems Research
+  Laboratories, Mountain View, California, Feb. 1999.
+
+\end{thebibliography}

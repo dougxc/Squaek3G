@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <!--JBuilder Library Definition File-->
+  <fullname>debugger</fullname>
+  <class>
+    <path>../../debugger/classes</path>
+  </class>
+  <source>
+    <path>../../debugger/src</path>
+  </source>
+  <lastmodsaved>1115112100189</lastmodsaved>
+</library>

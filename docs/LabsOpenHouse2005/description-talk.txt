@@ -1,0 +1,33 @@
+Title: Java on Sensors
+
+Description (200 words): 
+
+In the last two years we have seen a huge increase in the "buzz" around
+the topic of Wireless Sensor Applications. Products such as Motes and
+Embers have emerged, along with standards including IEEE 802.15.4 and
+Zigbee.  We have seen reports of a few applications in journals and at
+conferences, but on the whole the developer community has not moved
+significantly to create applications for these new platforms.
+
+The SunSpot project at Sun Labs was started to draw together several
+threads of complementary research into a new advanced development
+programme. The result of this program is a new system designed to allow
+developers to rapidly create complete Wireless Sensor Applications using
+Java. The system includes hardware--small battery powered sensor
+devices; and software--a tiny reflective Java VM (the Squawk VM) and 
+a development kit.  Squawk acts as the OS all the way down to the hardware, 
+not just as a thin veneer over another system.
+
+In this talk we will introduce the SunSpot technology and explain why
+Java is a good fit for embedded systems.  We will also demonstrate
+several applications built using the technology. 
+
+
+
+Short description: 
+This talk describes the use of the Squawk Java Virtual Machine on a 
+small, wireless sensor platform called SunSpot.  This talk will describe 
+the motivations for using a JVM on wireless sensor devices and the 
+advantages of using the Squawk VM.  Demonstrations of working systems 
+running on the hardware will also be shown.
+

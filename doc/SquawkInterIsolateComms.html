@@ -1,0 +1,840 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=ProgId content=Word.Document>
+<meta name=Generator content="Microsoft Word 9">
+<meta name=Originator content="Microsoft Word 9">
+<link rel=File-List href="./SquawkInterIsolateComms_files/filelist.xml">
+<title>The Squawk channel architecture</title>
+<!--[if gte mso 9]><xml>
+ <o:DocumentProperties>
+  <o:Author> ns</o:Author>
+  <o:LastAuthor>Cristina Cifuentes</o:LastAuthor>
+  <o:Revision>4</o:Revision>
+  <o:TotalTime>2395</o:TotalTime>
+  <o:LastPrinted>2004-10-05T19:41:00Z</o:LastPrinted>
+  <o:Created>2005-03-18T22:57:00Z</o:Created>
+  <o:LastSaved>2005-03-18T22:57:00Z</o:LastSaved>
+  <o:Pages>6</o:Pages>
+  <o:Words>1621</o:Words>
+  <o:Characters>9241</o:Characters>
+  <o:Company> ns</o:Company>
+  <o:Lines>77</o:Lines>
+  <o:Paragraphs>18</o:Paragraphs>
+  <o:CharactersWithSpaces>11348</o:CharactersWithSpaces>
+  <o:Version>9.6926</o:Version>
+ </o:DocumentProperties>
+</xml><![endif]-->
+<style>
+<!--
+ /* Font Definitions */
+@font-face
+	{font-family:Courier;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:modern;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Wingdings;
+	panose-1:5 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:2;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+ /* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{mso-style-parent:"";
+	margin:0in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+h1
+	{mso-style-next:Normal;
+	margin-top:12.0pt;
+	margin-right:0in;
+	margin-bottom:3.0pt;
+	margin-left:0in;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:1;
+	font-size:16.0pt;
+	font-family:Arial;
+	mso-font-kerning:16.0pt;}
+h2
+	{mso-style-next:Normal;
+	margin-top:12.0pt;
+	margin-right:0in;
+	margin-bottom:3.0pt;
+	margin-left:0in;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:2;
+	font-size:14.0pt;
+	font-family:Arial;
+	font-style:italic;}
+h3
+	{mso-style-next:Normal;
+	margin-top:12.0pt;
+	margin-right:0in;
+	margin-bottom:3.0pt;
+	margin-left:0in;
+	mso-pagination:widow-orphan;
+	page-break-after:avoid;
+	mso-outline-level:3;
+	font-size:13.0pt;
+	font-family:Arial;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;
+	mso-header-margin:.5in;
+	mso-footer-margin:.5in;
+	mso-paper-source:0;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+@list l0
+	{mso-list-id:235408958;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-1274537536 1818930994 67698691 67698693 67698689 67698691 67698693 67698689 67698691 67698693;}
+@list l0:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:48.0pt;
+	mso-level-number-position:left;
+	margin-left:48.0pt;
+	text-indent:-.25in;
+	font-family:Symbol;
+	mso-fareast-font-family:"Times New Roman";
+	mso-bidi-font-family:"Times New Roman";}
+@list l1
+	{mso-list-id:510727801;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1767281258 67698689 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+@list l1:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	font-family:Symbol;}
+@list l2
+	{mso-list-id:668217668;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1518756106 67698703 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+@list l2:level1
+	{mso-level-tab-stop:39.0pt;
+	mso-level-number-position:left;
+	margin-left:39.0pt;
+	text-indent:-.25in;}
+@list l3
+	{mso-list-id:1011102798;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-1473504244 67698689 67698691 67698693 67698689 67698691 67698693 67698689 67698691 67698693;}
+@list l3:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	font-family:Symbol;}
+@list l4
+	{mso-list-id:1992981453;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1767281258 67698703 67698713 67698715 67698703 67698713 67698715 67698703 67698713 67698715;}
+@list l4:level1
+	{mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;}
+ol
+	{margin-bottom:0in;}
+ul
+	{margin-bottom:0in;}
+-->
+</style>
+</head>
+
+<body lang=EN-US style='tab-interval:.5in'>
+
+<div class=Section1>
+
+<h1 align=center style='text-align:center'>Squawk Inter-Isolate Communication</h1>
+
+<p class=MsoNormal>Squawk has a form of JSR-121 isolates, but no communication
+mechanism whereby data can be passed between them. This is a proposed
+message-passing system for inter-isolate communications that can also be used
+to communicate with very low-level interrupt handling software.</p>
+
+<h1>The Generic Connection Framework</h1>
+
+<p class=MsoNormal>Squawk uses the CLDC generic connection framework for I/O.
+The proposed inter-isolate communication mechanism is built upon this using a
+new <i>StreamConnection</i> and <i>StreamConnectionNotifier</i> protocol called
+the “msg://” protocol.</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>The “msg://” protocol is strictly client-server, and has as
+its unit of communication the <i>message transaction</i>. All message
+transactions are divided into two parts, the client-to-server part and the server-to-client
+part. The sequence of communication is that the client transmits some data to
+the server, the server reads this, the server then transmits some reply to the
+client, and the client then receives this. These four operations constitute a
+message transaction. A transaction is only complete when all four phases are
+completed.</p>
+
+<h1>Transaction integrity</h1>
+
+<p class=MsoNormal>Distributed systems commonly use some kind of two-phase
+commit protocol to ensure that transaction atomicity is achieved. The message
+protocol attempts to provide this kind of guarantee on a simple
+message-by-message basis.<span style="mso-spacerun: yes">  </span>The sender
+and receiver of a message should only commit the side effects of the message
+transaction when all the four phases are complete and no errors were detected.
+In the case where there is a network failure the sender and receiver should
+rollback to the state before the transaction was initiated. Unfortunately this
+can never be totally foolproof system because when the server sends the final
+reply to the client it is not be possible to report a logical transaction
+failure in the case then client crashes before its commit is performed.
+Similarly the client cannot be sure that the server has not crashed before its
+commit is complete. In database systems this problem is known as <i>In-Doubt
+Transactions</i>. Ultimately an agent that is a fixed point of contact must
+solve these problems. The agent can either be a human operator or a reliable
+computer system. It is not clear how this problem should be addressed in a
+distributed self-healing wireless network.</p>
+
+<h1>Addressing</h1>
+
+<p class=MsoNormal>Messages are sent to logical rather than physical
+destinations. The system of mapping the logical address to a physical address
+is outside the scope of this design, but will typically range from a simple
+registry system for single node devices, to some kind of JINI-like discovery
+mechanism. The logical address is made up as follows:</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal><span style='mso-tab-count:1'>            </span>msg://group/member/stream</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>where <i>group</i> is the name of a logical group of
+isolates, <i>member</i> is the name of an isolate in the group, and <i>stream</i>
+is the name of a stream within the isolate. Various defaults will exist to
+represent the group that the calling isolate is a member, or the subgroup that
+includes only the isolates in the same node as the caller.</p>
+
+<h1>Connection persistence</h1>
+
+<p class=MsoNormal>All connections are infinitely persistent and optimistic.
+This means that if a client sends a message to a server connection that does
+not exist, the client will wait, potentially, forever, and so some kind of
+connection timeout may be required. There is no default timeout mechanism.
+Applications can manually kill connections after a time period, but unlike
+software that has to directly communicate with a human operator, sensor
+software will normally operate continuingly and the underlying communication
+system of the message passing protocol will deal with all low-level retry
+operations as necessary.</p>
+
+<h1>Client Example</h1>
+
+<p class=MsoNormal>Following is an example of a client side connection. The
+server is the isolate called <i>sunstock </i>in the default group, and it is
+reading from a stream called <i>is64again</i>.</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>try {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>StreamConnection con = <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">       
+</span>(StreamConnection)Connectior.open(&quot;msg:///sunstock/is64again&quot;);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>InputStream<span style="mso-spacerun: yes">  </span>in<span
+style="mso-spacerun: yes">  </span>= con.openInputStream();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>OutputStream
+out = con.openOutputStream();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>// Write
+request to 'out'<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>out.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>// Read reply
+from 'in' until EOF<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>in.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>con.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>// Commit<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>} catch (IOException ioe) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>// Abort<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>}</span></p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<b><span style='font-size:16.0pt;font-family:Arial;mso-fareast-font-family:
+"Times New Roman";mso-font-kerning:16.0pt;mso-ansi-language:EN-US;mso-fareast-language:
+EN-US;mso-bidi-language:AR-SA'><br clear=all style='page-break-before:always'>
+</span></b>
+
+<h1>Server Example</h1>
+
+<p class=MsoNormal>Following is an example of a server side connection. This
+services the stream called <i>foo</i> in the current isolate.</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>try {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">  </span><span
+style="mso-spacerun: yes">  </span>StreamConnectionNotifier scn = <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">       
+</span>(StreamConnectionNotifier)Connectior.open(&quot;msg:////foo&quot;);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>for (;;) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">        </span>try {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">           
+</span>StreamConnection con = scn.acceptAndOpen();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">           
+</span>InputStream<span style="mso-spacerun: yes">  </span>in<span
+style="mso-spacerun: yes">  </span>= con.openInputStream();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">            </span>OutputStream
+out = con.openOutputStream();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">            </span>// Read
+request from 'in' until EOF<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">           
+</span>in.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">            </span>//
+Write reply to 'out'<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">           
+</span>out.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">           
+</span>con.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">            </span>//
+Commit<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">        </span>} catch
+(IOException ioe) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">            </span>//
+Abort<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">        </span>}<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>}<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>} catch (IOException ioe) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>// Probable
+programming error<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>}<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<b><span style='font-size:16.0pt;font-family:Arial;mso-fareast-font-family:
+"Times New Roman";mso-font-kerning:16.0pt;mso-ansi-language:EN-US;mso-fareast-language:
+EN-US;mso-bidi-language:AR-SA'><br clear=all style='page-break-before:always'>
+</span></b>
+
+<h1>Drivers and Interrupts</h1>
+
+<p class=MsoNormal>The inter-isolate message passing system is intended for
+communication between applications as well as communication between applications
+and device drivers. </p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>Drivers commonly have at least two types of message. One is
+an I/O request from an application. The other is an interrupt from the
+hardware. It is rare to find a driver architecture where these two message
+types are the same, but this is the case in this system.</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>One important observation is that the lifetimes of these
+message transactions are different. The I/O request message will typically
+start before and end after the interrupt message, and thus it is necessary for
+the driver to process at least two messages at one time.<span style='font-family:
+Courier'><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-family:Courier'><span style="mso-spacerun:
+yes">       </span>Lifetime of the I/O request message<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-family:Courier'>I-----------------------------------------------I<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-family:Courier'><span style="mso-spacerun:
+yes">                </span>I--------------I<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-family:Courier'><span style="mso-spacerun:
+yes">        </span>Lifetime of the interrupt message<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-family:Courier'>Time ----&gt;<o:p></o:p></span></p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>This kind of problem is typically solved in Java by having
+two threads one for each message type in the following way. The I/O thread
+blocks waiting for an I/O request, and when one arrives it programs the
+hardware to do something and blocks. The interrupt waits for an interrupt
+message, and when one arrives it unblocks the first thread and dismisses the
+interrupt. The I/O request thread now sends the message reply information and
+loops around for the next request.</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>There are a number of possible problems with this scenario
+in the Squawk system. </p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal style='margin-left:39.0pt;text-indent:-.25in;mso-list:l2 level1 lfo4;
+tab-stops:list 39.0pt'><![if !supportLists]>1.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+</span><![endif]>There are at least two active threads, and, in general, this
+means that the need for some kind of thread scheduling which may not be very
+fast. It is sometimes necessary to respond to interrupts in a small number of
+cycles and the current Squawk thread scheduler will not do this.</p>
+
+<p class=MsoNormal style='margin-left:39.0pt;text-indent:-.25in;mso-list:l2 level1 lfo4;
+tab-stops:list 39.0pt'><![if !supportLists]>2.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+</span><![endif]>As there is more than one thread there are potential thread
+synchronization issues to be addressed.</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>One attractive driver architecture is where all the code is
+implemented using exactly one thread. This enforces the serialization of all
+driver operations, which is often exactly the right model, and is certainly a
+simple one to program to.</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>If the driver is run in an isolate that has a private memory
+space (i.e. not sharing a the heap with other isolates) then we can implement a
+two-level scheduling system where lower level scheduling is doing simple <i>isolate
+group</i> level context switching much like a operating system typically does
+process context switching, and then inside each isolate group the current
+Squawk scheduler operates. In the case of a driver it is in an isolate group
+that has only one isolate and this isolate has only one thread so no higher
+level scheduler is needed.</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>The solution to having one thread and several queues is to
+implement something like the Unix <span style='font-family:Courier'>select()</span>
+function.</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>The following is the skeleton for a driver that supports
+three message queues. The first is a queue of I/O requests. The second is for
+interrupt notifications, and the third is for application status requests. All
+three are controlled with <span style='font-size:10.0pt;mso-bidi-font-size:
+12.0pt;font-family:Courier'>StreamConnectionNotifier</span> objects that are
+added into a <span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>StreamConnectionSelector</span> object for which a <span
+style='font-size:10.0pt;mso-bidi-font-size:12.0pt;font-family:Courier'>select()</span>function
+can be called to cause the calling thread to wait for the next available
+message. </p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>The instance variable <span style='font-size:10.0pt;
+mso-bidi-font-size:12.0pt;font-family:Courier'>activeRequest</span><span
+style='font-size:10.0pt;mso-bidi-font-size:12.0pt'> </span>is used to hold the
+active I/O request while the driver waits for the hardware to interrupt. </p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>The interrupt message contains no useful data and just needs
+to be closed when the interrupt has been processed. Closing this connection
+causes low-level C code to be executed that will enable the device to generate
+further interrupts. This interlock ensures that interrupts cannot be generated
+when the interrupt message is being processed, which, in turn, means that a
+single statically allocated interrupt message connection object can be used for
+all interrupt messages. </p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal>The message protocol can be implemented to pre-allocate a <span
+style='font-size:10.0pt;mso-bidi-font-size:12.0pt;font-family:Courier'>StreamConnection
+</span>for each <span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>StreamConnectionNotifier </span>(if so desired). Doing
+this would lead to a driver that did not necessarily generate garbage when it
+operated, but would burden the programmer with a dangling pointer issue when
+the connection close operation allowed the object to be reused.</p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;font-family:Courier;
+mso-fareast-font-family:"Times New Roman";mso-bidi-font-family:"Times New Roman";
+mso-ansi-language:EN-US;mso-fareast-language:EN-US;mso-bidi-language:AR-SA'><br
+clear=all style='page-break-before:always'>
+</span>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>StreamConnection activeRequest;<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>void runDriver() {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>StreamConnectionNotifier request =<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">       </span>(StreamConnectionNotifier)Connectior.open(&quot;msg:////dev-request&quot;);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>StreamConnectionNotifier status =<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">      
+</span>(StreamConnectionNotifier)Connectior.open(&quot;msg:////dev-status&quot;);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>StreamConnectionNotifier interrupt =<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">      
+</span>(StreamConnectionNotifier)Connectior.open(&quot;msg:////irq7&quot;);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>StreamConnectionSelector selector = new StreamConnectionSelector();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>selector.add(request);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>selector.add(status);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>selector.add(interrupt);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>while (true) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">       
+</span>StreamConnectionNotifier scn = selector.select();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">  </span><span
+style="mso-spacerun: yes">      </span>StreamConnection con =
+scn.acceptAndOpen();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">        </span>if (scn ==
+request) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">           
+</span>processRequest(con);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">        </span>} else if
+(scn == interrupt) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">           
+</span>processInterrupt(con);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">        </span>} else if
+(scn == status) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">           
+</span>processStatus(con);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes"> </span><span
+style="mso-spacerun: yes">       </span>} else {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">           
+</span>Assert.shouldNotReachHere();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">        </span>}<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>}<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>}<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>void processRequest(StreamConnection con) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>activeRequest =
+con;<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>InputStream in
+= con.openDataInputStream();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>int p1<span
+style="mso-spacerun: yes">  </span>= in.readInt(); // Read parms.<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>int p2<span
+style="mso-spacerun: yes">  </span>= in.readInt();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>int p3<span
+style="mso-spacerun: yes">  </span>= in.readInt();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>in.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>/* <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">     </span>* Do something
+now to the hardware that will cause an interrupt. <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">     </span>*/<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>}<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>void processInterrupt(StreamConnection con) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>/* <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">     </span>* Note, the
+low-level C code has disabled the interrupt<span style="mso-spacerun:
+yes">      </span><o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:30.0pt'><span style='font-size:10.0pt;
+mso-bidi-font-size:12.0pt;font-family:Courier'>* for our hardware. <o:p></o:p></span></p>
+
+<p class=MsoNormal style='margin-left:30.0pt'><span style='font-size:10.0pt;
+mso-bidi-font-size:12.0pt;font-family:Courier'>*/<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>int result =
+&lt;Some value from the hardware&gt;<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>/* Complete the
+I/O request */<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>OutputStream
+out = activeRequest.openDataOutputStream();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>out.writeInt(result);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>out.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>activeRequest.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>activeRequest =
+null;<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>/* <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">     </span>* Closing this
+connection signals to the low-level<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">     </span>* C code that
+hardware interrupts should be enabled. <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">     </span>*/<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>con.close(); <o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>}<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>void processStatus(StreamConnection con) {<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>InputStream in
+= con.openDataInputStream();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>int p1 =
+in.readInt(); // get status command parameter<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>in.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>OutputStream
+out = con.openDataOutputStream();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">   
+</span>out.writeInt(something);<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>out.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'><span style="mso-spacerun: yes">    </span>con.close();<o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;mso-bidi-font-size:12.0pt;
+font-family:Courier'>}<o:p></o:p></span></p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+<p class=MsoNormal><![if !supportEmptyParas]>&nbsp;<![endif]><o:p></o:p></p>
+
+</div>
+
+</body>
+
+</html>

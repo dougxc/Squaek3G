@@ -1,0 +1,137 @@
+Andrew and I went through the demos we plan to run at the open house and 
+they all seemed to work well enough (modulo a seg fault on Andrews 
+machine!). Anyway, I think it would be useful if there is a rough script 
+as to how to demo this to visitors. Andrew and I will make sure all the 
+required files exist (executables and suite files) on each machine and 
+that the environment is configured appropriately (i.e. jvmenv). The 
+demoer then simply has to make sure they are in the right directory and 
+follow this script.
+
+See Squawk run
+--------------
+
+This is a simple execution of the shell demo to show Squawk executing a 
+program. Once the shell is started, start a copy of each demo.
+
+% squawk -verbose -cp:samples/j2meclasses example.shell.Main
+
+If there is a question about the noticeable slow down during class 
+loading, point out that the class loader itself is a Java program 
+running in a separate thread. Once the complete Squawk architecture is 
+complete, the class loader would be compiled ahead of time and not 
+present such a slowdown.
+
+Demonstrate suites
+------------------
+
+Show how classes can be prebuilt into suites and what a difference it 
+makes for start up time.
+
+% squawk -verbose java.lang.SuiteCreator -cp:samples/j2meclasses samples example.manyballs
+% squawk -verbose -suite:samples -cp:samples/j2meclasses example.shell.Main
+
+Now starting "manyballs" should be noticeably quicker.
+
+Demonstrate hibernation
+-----------------------
+
+Show that each demo is an isolate compuation (i.e. an Isolate) that can 
+be suspended, serialized to external storage and resumed.
+
+% squawk -verbose -suite:samples example.shell.Main
+
+1. Start up manyballs
+2. Add a few more balls
+3. Right click and hibernate
+4. The use "restart" button to resume the demo
+
+To prove the point of loading from external storage, you can kill the VM 
+between steps 3 and 4, restarting it with the same command line.
+
+Demonstrate migration
+---------------------
+
+Show that the hibernation capability can be used to achieve isolate 
+migration between 2 machines, *independent* of the endianess of the 
+machines.
+
+First start up the server than will be used to register and co-ordinate 
+the shells on each machine:
+
+% squawk -cp:samples/j2meclasses example.shell.LookupServer -verbose
+
+Note the address of the lookup server from the first output line that 
+will look something like:
+
+[starting shell lookup service on 129.146.72.237]
+
+Now start up the shell on each machine, registering it with the server:
+
+% squawk -verbose -cp:samples/j2meclasses example.shell.Main -verbose \
+          -register:129.146.72.237
+
+
+Start up cubes on one of the machines and then hibernate it. This will 
+dougcause a popup list on the host shell that gives you a choice of 
+which remote shell to send it to. Use this mechanism to move the isolate 
+between the three machines, pointing out that each machine is running a 
+different OS+architecture combination and that Windows is a little 
+endian machine.
+
+Demonstrate an application of migration: load balancing
+-------------------------------------------------------
+
+Show that migration can be used for something useful. This time startup 
+the server as follows:
+
+% squawk -cp:samples/j2meclasses example.shell.LookupServer -verbose \
+          -loadbalance:ManyBalls
+
+Restart the shells on each machine as before and then start up 5 
+manyball instances on one machine. Add one extra ball to one manyball 
+instance. In time, the isolates should move around to come to state 
+where there are two balls on each machine. Explain that we are using the 
+balls to represent the workload of each isolate.
+
+Demonstrate debugger
+---------------------
+
+Show that a JPDA debugger can be used to debug programs on Squawk.
+Restart the shell (if necessary) and the start the proxy (in a new
+shell window):
+
+% java -jar build.jar sdproxy -log:info -cp:squawk_classes.jar:samples/j2meclasses
+
+Check the "Debug" box in the shell and change the log choice to "info". Now
+start "manyballs" and wait until you see following in the proxy shell window:
+
+Waiting for connection from debugger on serversocket://:2900
+
+Now start a debugger (e.g. JBuilder) and configure it so that it will try to
+attach to a remote debugger on "localhost:2900". Debugger behaviour differs
+with respect to connecting with a VM. JBuilder connects but leaves the VM in
+its suspended state until the user explicitly press the 'play' button.
+
+Once you see a balls running, add a few more (right arrow key) and then
+'pause' the debugger. Use the 'threads' tab to show the user the runtime
+state. Play around with breakpoints.
+
+** DO NOT TRY TO HIBERNATE AN APP TO WHICH A DEBUGGER IS CURRENTLY ATTACHED **
+
+Appendix
+--------
+
+Just for reference, here are the steps required to create the executable 
+and bootstrap suite:
+
+% java -jar build.jar -prod -o2 -mac rom j2me debugger translator graphics
+
+Which produces squawk_classes.jar. This file must be copied to each 
+machine that the demo will be run on and then used in the following command:
+
+% java -jar build.jar -prod -o2 -mac rom squawk_classes.jar
+
+This creates squawk.suite and squawk[.exe].
+
+-Doug
+

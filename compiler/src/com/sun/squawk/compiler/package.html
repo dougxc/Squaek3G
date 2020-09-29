@@ -1,0 +1,420 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head><!--
+  Copyright (c) 2005 Sun Microsystems, Inc. All Rights Reserved.
+--></head>
+
+<body bgcolor="white">Provides the compiler interfaces and classes for building a compilation system 
+for the Squawk Java virtual machine. 
+Implementations of this package can support multiple target architectures, such 
+as IA32, ARM, PPC, etc.
+<p>
+The compiler framework (package) involves two entities: the <code>Compiler</code>
+and the <code>Linker</code>.  The compiler provides the methods to compile an 
+application to run on the Squawk JVM, be it a general-purpose Java application 
+or the Squawk system classes themselves.  
+The linker provides a way to link the object code produced by the compiler into 
+a binary image that will run on the target architecture of choice (e.g., IA32, 
+ARM, PPC).  
+These two entities are controlled by the <code>Compilation</code> class. 
+<p>
+The <code>Compiler</code> interface supports the building of general-purpose 
+applications, as well as the building of an interpreter by means of two 
+interfaces: <code>BaseCompiler</code> (for general purpose applications), and 
+<code>InterpCompiler</code> (for generation of the Squawk <code>Interpreter</code>).
+<p> 
+ 
+
+<h2>Package Specification</h2>
+
+The compiler package has been designed to be (source) language independent, as 
+it does not support the semantics of the Java language or the Java bytecodes, or 
+any other language for that matter.
+Users of the compiler package rely on the elementary methods available in the 
+<code>BaseCompiler</code> and the <code>InterpCompiler</code> interfaces, which 
+are explained next. 
+
+
+<h3>The <code>BaseCompiler</code> Interface</h3>
+
+The <code>BaseCompiler</code> interface is a language-independent interface 
+that supports the compilation of general purpose applications, whether those 
+applications are written using the Java language or a language such as C.  
+<p>
+Therefore, the <code>BaseCompiler</code> interface provides methods to compile 
+elementary pieces of information, such as arithmetic and logical operations 
+(e.g., add, subtract, xor, shift left, etc.), transfer the flow of control 
+operations (e.g., branch if greater than, call, return, etc.), function definition 
+(e.g., begin, end), etc. 
+Refer to the <a href="BaseCompiler.html">BaseCompiler Javadoc</a> for more 
+information on the methods available in this interface. 
+
+
+<h4>Example usage of the <code>BaseCompiler</code> interface</h4>
+
+The following example illustrates the usage of the <code>BaseCompiler</code> 
+interface.  
+The core of the interface usage is between the <code>enter</code> and 
+<code>compile</code> method invocations.
+<p> 
+We want to write an anonymous function that adds two integer numbers and 
+returns the result of the addition.  
+<p>
+A function signature consists of it's start (denoted by <code>enter</code>) and 
+end (denoted by <code>leave</code>), an optional name, it's formal parameters, 
+and its return value type (if any). 
+<p>
+An <code>enter</code> method allows for a symbol name to be attached to the 
+location of the entry to the function, hence, giving the function a name.  
+An anonymous function is setup by not providing a symbol to the <code>enter</code>
+method.
+<p>
+Parameters to a function are specified by the <code>parm</code> method, which
+takes as argument the type of the formal parameter, and returns the location 
+(a <code>Local</code>) for this parameter.  Users of the compiler interface 
+can name formal parameters by assigning the returned location to a named variable. 
+For example, in our example, we have setup two formal parameters: <code>x</code> 
+and <code>y</code>, both of type integer.  
+<p>
+The return type of the function is specified by means of the <code>result</code>
+method, which passes as actual parameter the type to be returned by the function. 
+a return type of <code>VOID</code> means that no value gets returned.  
+
+<pre>
+    public static void main(String[] args) {
+
+        Compiler c = Compilation.newCompiler();
+
+        c.enter();
+        Local x = c.parm(INT);      // x
+        Local y = c.parm(INT);      // y
+        c.result(INT);
+            c.begin();
+                c.load(x);          // x
+                c.load(y);          // y
+                c.add();            // x + y
+                c.ret();            // return
+            c.end();
+        c.leave();
+
+        c.compile();
+        Linker linker = Compilation.newLinker(c);
+        int entry = linker.link();
+        int res = CSystem.icall(new Parm(entry).parm(1).parm(2));
+
+        System.out.println("1 + 2 = "+res);
+        System.exit(0);
+</pre>
+
+A function's body is enclosed in a scope, denoted by <code>begin</code> and 
+<code>end</code>.  
+Within the function's scope, we can specify any set of instructions that will
+build a function using a stack-based representation. 
+In our example, we load the formal parameters <code>x</code> and <code>y</code> 
+onto the stack, we add then by popping the top two elements of the stack, adding
+them, and pushing the result of the addition back onto the stack, and we return
+this result by emitting a return instruction (<code>ret</code>). 
+<p>
+In order to compile and execute this function, we make use of the 
+<code>Compilation</code> class and the Squawk JVM <code>CSystem</code> support 
+to run binary images. 
+<p>
+A new compiler <code>c</code> is instantiated by the <code>Compilation</code>'s
+<code>newCompiler</code> method.  Code gets generated for this compiler, and 
+once it is compiled, the <code>Compilation</code>'s <code>newLinker</code> 
+method provides a linker, <code>linker</code>, to link in the results of the 
+compilation and place the binary image in memory.  
+The resulting start address of the compilation is returned by the <code>linker</code>. 
+This address is then used by the <code>CSystem</code>'s <code>call</code> 
+method to run the binary image with a given set of actual parameters.  
+
+
+<h3>The <code>InterpCompiler</code> Interface</h3>
+
+The <code>InterpCompiler</code> interface is a language-independent interface 
+that extends the <code>BaseCompiler</code> interface to support the building 
+of an interpreter (the <code>Interpreter</code>) in the Squawk JVM. 
+<p>
+The <code>InterpCompiler</code> interface makes use of the following pseudo 
+types to aid in the construction of an interpreter: 
+<ul>
+<li> <code>MP</code>: the method pointer, a variable of this type points to the
+     current method that is executing, 
+<li> <code>IP</code>: the instruction pointer, a variable of this type points to 
+     the next instruction to be executed, 
+<li> <code>LP</code>: the local pointer, a variable of this type points to bottom 
+     of the space occupied by locals in the stack frame, and 
+<li> <code>SS</code>: the (compiler) stack pointer, a variable of this type points
+     to the end of the stack frame allocated via an <code>alloca</code> instruction.  
+</ul>
+<p>
+The interface provides for methods to access and grow the stack frame, to keep 
+track of the value of the above pseudo-types, to create locals and parameters 
+of the same, to store, and to write to them.  
+
+
+<h4>Example usage of the <code>InterpCompiler</code> interface</h4>
+
+The best way to illustrate how to use the <code>InterpCompiler</code> interface
+is by means of an example.  
+<p>
+Interpreters are written using a loop over the instructions to be executed.
+Assume you want to write an interpreter that can load values, store them, and 
+subtract them, as well as know about constant values.  
+These snippets of code can be written using standard <code>BaseCompiler</code> 
+instructions, assuming the existance of a <code>gotonext</code> method, which 
+gets the next instruction to be executed, and executes it.
+For example, here is the code snippet to implement a subtract: 
+<pre>
+    c.bind(sub);
+        c.pop(INT);
+        c.pop(INT);
+        c.swap().sub();
+        c.push();
+        gotonext();
+</pre>
+<p>
+The <code>gotonext</code> method provides a way to get the instruction to be 
+executed next and jump to its code snippet.  In the following sample code, the 
+<code>getbyte</code> method gets the next byte to be executed in the program 
+using the instruction pointer.  Given the byte of the program to be executed, 
+a lookup into a <code>table</code> of labels for the code snippets can be done
+to get the address of the code snippet and jump to that address: 
+<pre>
+    private void gotonext() {
+        getbyte();
+        c.literal(4);
+        c.mul();
+        c.literal(table);
+        c.add();
+        c.read(REF);
+        c.jump();
+    }
+</pre>
+<p>
+The <code>getbyte</code> method is a standard method that returns/leaves on the
+top of the stack, the next instruction (byte) to be executed, and increments the 
+instruction pointer:
+<pre>
+    private void getbyte() {
+        c.load(ip);
+        c.dup();
+        c.literal(1);
+        c.add();
+        c.store(ip);
+        c.read(BYTE);
+    }
+</pre>
+<p>
+The most important part of the interpreter is the setting up of its 
+<code>Local</code> variables <code>ip</code>, <code>mp</code>, <code>lp</code>, 
+and <code>ss</code>.  
+<p>
+The method pointer (<code>mp</code>) gets set at instantiation time of a 
+<code>Local</code> of type <code>MP</code>.  
+Such method pointer can have one of three values: 
+<ul>
+<li> 0, if the special preamble for the method was <code>E_NULL</code>,
+<li> a predefined register (<code>eax</code> for IA32), if the special 
+     preamble for the method was <code>E_REGISTER</code>, or 
+<li> the method's address, if the special preamble for the method was 
+     <code>E_ADDRESS</code>.
+</ul>
+The method pointer points to the method that starts the execution of the 
+program.  This method is set up by the Squawk JVM <code>dispatcher</code> (at 
+present).
+<p>
+The instruction pointer (<code>ip</code>) is set to point to the bytes of the 
+program to be executed.  In our example below, this is done by skipping over 
+the bytes of the jump instruction that transfer control to the interpreter code 
+itself, as the bytecodes to be executed were copied as data right after this 
+instruction. 
+<p>
+The stack pointer (<code>ss</code>) is set by the <code>alloca</code> method, 
+by storing the address of the end of the stack frame.
+<p>
+And the local pointer (<code>lp</code>) is set by storing the result of the 
+<code>alloca</code> method (i.e., the address of the end of the stack frame).  
+<p>
+A complete sample program that implements an interpreter that knows about 
+constants, loads, stores, and subtracts, follows.
+<pre>
+public class InterpreterExample implements Types {
+
+    Compiler c = Compilation.newCompiler();
+
+    Label sub   = c.label(); private byte SUB   = (byte)0;
+    Label con   = c.label(); private byte CON   = (byte)1;
+    Label load  = c.label(); private byte LOAD  = (byte)2;
+    Label store = c.label(); private byte STORE = (byte)3;
+    Label ret   = c.label(); private byte RET   = (byte)4;
+    Label table = c.label();
+
+    Local mp, ip, lp, ss;
+
+    public static void main(String[] args) {
+        new InterpreterExample().run();
+    }
+
+    public void run() {
+        c.enter(Compiler.E_REGISTER);
+        c.result(INT);
+            c.begin();
+                mp = c.local(MP);
+                ip = c.local(IP);
+                lp = c.local(LP);
+                ss = c.local(SS);
+
+                // set up the instruction pointer ip
+                c.load(mp);
+                c.literal(c.getJumpSize());
+                c.add();
+                c.store(ip);
+
+                // check that there is still space in the (chunky) stack frame
+                c.literal(WORD.getStructureSize() * 5);  // Number of extra local bytes
+                c.literal(WORD.getStructureSize() * 5);  // Number of extra stack bytes
+                c.stackCheck();
+
+                // set up the stack pointer ss and the local pointer lp
+                c.literal(WORD.getStructureSize() * 5);  // Allocate memory for 5 locals.
+                c.alloca();
+                c.store(lp);                             // Save address in lp
+
+                gotonext();
+
+            c.bind(sub);   // subtract code snippet
+                c.comment("+++++++sub");
+                c.pop(INT);
+                c.pop(INT);
+                c.swap().sub();
+                c.push();
+                gotonext();
+                c.comment("-------sub");
+
+            c.bind(con);   // constant code snippet
+                c.comment("+++++++con");
+                getbyte();
+                c.push();
+                gotonext();
+                c.comment("-------con");
+
+            c.bind(load);   // load code snippet
+                c.comment("+++++++load");
+                getbyte();
+                c.literal(4);
+                c.mul();
+                c.load(lp);
+                c.add();
+                c.read(INT);
+                c.push();
+                gotonext();
+                c.comment("-------load");
+
+            c.bind(store);   // store code snippet
+                c.comment("+++++++store");
+                c.pop(INT);
+                getbyte();
+                c.literal(4);
+                c.mul();
+                c.load(lp);
+                c.add();
+                c.write(INT);
+                gotonext();
+                c.comment("-------store");
+
+            c.bind(ret);   // return code snippet
+                c.comment("+++++++ret");
+                c.pop(INT);
+                c.ret();
+                c.comment("-------ret");
+
+            c.end();
+
+        c.comment("table");
+        c.data(table, new Label[]{sub, con, load, store, ret});
+        c.leave();
+
+        c.compile();
+        int interp = Compilation.newLinker(c).link();
+
+        /*
+         * Define the program.
+         */
+        byte[] program = new byte[] {CON, 1, STORE, 1, CON, 100, STORE, 2, LOAD, 2, LOAD, 1, SUB, RET};
+
+        /*
+         * Allocate the bytecode array and put a jump instruction
+         * to the interpreter at the start of it followed by the
+         * bytecodes for the program.
+         */
+        int bytecodes = CSystem.malloc(c.getJumpSize()+program.length);
+        int bc = bytecodes;
+
+        /*
+         * Use special function in the compiler to get the jump instruction
+         * to the interpreter. This is returned a single byte at a time.
+         */
+        for (int i = 0 ; i < c.getJumpSize() ; i++) {
+            CSystem.setByte(bc++, c.getJumpByte(bytecodes, interp, i));
+        }
+
+        /*
+         * Add the program to the array.
+         */
+        for (int i = 0 ; i < program.length ; i++) {
+            CSystem.setByte(bc++, program[i]);
+        }
+
+        /*
+         * Call the bytecode array.
+         */
+        int res = CSystem.icall(new Parm(bytecodes));
+        System.out.println("100 - 1 -> "+res);
+        System.exit(0);
+    }
+
+    private void getbyte() {
+        c.comment("+getbyte");
+        c.load(ip);
+        c.dup();
+        c.literal(1);
+        c.add();
+        c.store(ip);
+        c.read(BYTE);
+        c.comment("-getbyte");
+    }
+
+    private void gotonext() {
+        c.comment("+gotonext");
+        getbyte();
+        c.literal(4);
+        c.mul();
+        c.literal(table);
+        c.add();
+        c.read(REF);
+        c.jump();
+        c.comment("-gotonext");
+    }
+}
+</pre>
+
+Please note that the <code>InterpCompiler</code> interface is meant to be 
+simplified in the near future.  This is to avoid the use of the pseudo-types 
+and the complexity that such types create in the implementation of the 
+interface.  
+Any feedback would be greatly appreciated.
+
+
+<h2>Related Documentation</h2>
+
+For general documentation on the Squawk JVM, please see: 
+<ul>
+<li><a href="..\..\..\..\..\..\doc\HowToBuildAndRunSquawk3G.pdf">How to Build and Run 
+    the Squawk 3G JVM</a>
+<li><a href="..\..\..\..\..\..\doc\lctes03.pdf">A Java Virtual Machine Architecture 
+    for Very Small Devices</a>, Nik Shaylor, Douglas Simon, and William Bush,   
+    LCTES 2003.  This document describes a previous version of the Squawk system, 
+    targetted at the JavaCard (SquawkNG).
+</ul></body>
+</html>

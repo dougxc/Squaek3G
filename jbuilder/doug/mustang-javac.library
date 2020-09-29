@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <!--JBuilder Library Definition File-->
+  <fullname>mustang-javac</fullname>
+  <class>
+    <path>[../../vm2c/mustang-javac.jar]</path>
+  </class>
+  <source>
+    <path>[../../vm2c/mustang-javac-src.jar]</path>
+  </source>
+  <lastmodsaved>1132791585967</lastmodsaved>
+</library>

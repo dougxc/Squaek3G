@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+</head>
+<body>
+<h1>Squawk for Java Card 3.0</h1>
+<h2>(2002-2003)</h2>
+<p>The primary goal of the Squawk for Java Card 3.0 project was to
+build a very small footprint
+<a href="http://java.sun.com/products/cldc/">CLDC</a>-compatible
+Java virtual machine.&nbsp;
+A secondary goal was to write as much of the system as possible in
+Java.
+</p>
+<p>The next generation Java Card platform, 3.0, will use 32-bit
+microprocessors,
+but will have very limited memory,
+potentially no more than
+8 kB of RAM,
+32 kB of non-volatile memory, and
+160 kB of ROM.
+The major challenge of the project was thus to get complete
+<a href="http://java.sun.com/products/cldc/faqs.html">KVM</a>
+functionality in such constrained space.<br>
+</p>
+<p>The Squawk for Java Card 3.0 implementation makes use of a split VM
+architecture: an off-device translator which pre-verifies classfiles
+and translates them into spaced-optimized collections of classes called
+suites, and the on-device VM that interprets the suites.&nbsp; Suites
+average about 35% the size of J2ME classfiles.&nbsp; The whole VM is
+written in Java and tested under the Hotspot VM.&nbsp; For deployment
+purposes, the VM code is translated into C code and compiled using an
+optimizing C compiler.<br>
+</p>
+<p>The static footprint of the core system (interpreter, a RAM garbage
+collector, an non-volatile memory garbage collector), compiled from C,
+is 25 kB on x86.&nbsp; The minimum runtime footprint in RAM is 520
+bytes for the Java heap and 532 bytes for native stack and data (on
+x86).&nbsp; The runtime performance of Squawk is close to that of the
+KVM. <br>
+</p>
+<p>The Squawk for Java Card 3.0 was considered by the
+<a href="http://www.javacardforum.org/">Java Card Forum</a>
+as one of the candidate for standardization
+as the next generation Java Card runtime technology.
+</p>
+<h2>Related Publications
+</h2>
+<ul>
+  <li><a href="../docs/lctes03.pdf"> A Java Virtual Machine Architecture for
+    Very Small Devices.</a> Nik Shaylor, Doug Simon, and Bill Bush.&nbsp;
+    Proceedings of the Conference on Languages, Compilers, and Tools for
+    Embedded Systems, ACM Press, June 2003.</li>
+  <li><a href="../docs-internal/StatusUpdateForJCF-17Jun03.pdf">Squawk 
+    Technology Update</a>, Doug Simon, Slides for the JCF meeting, June 
+    2003.</li>
+  <li><a href="../docs-internal/StatusUpdateForJCF-030328.pdf">Squawk 
+    Technology,</a> Nik Shaylor and Doug Simon, Slides describing the Squawk 
+    for Java Card 3.0 system, April 2003.</li>
+  <li><a href="../docs-internal/squawk-Sep03.pdf">The Squawk System, 
+    Preliminary Draft 2.1 (16 September 2002).</a>&nbsp; Specification of 
+    the Squawk for Java Card 3.0 system.</li>
+</ul>
+<h2>The team</h2>
+Nik Shaylor, Doug Simon, and Bill Bush.<br>
+<br>
+<hr>
+<p>Back to <a href="index.html">the Squawk Project</a></p>
+<hr>
+<p>Contact: <a href="mailto:bill.bush@sun.com">Bill Bush</a></p>
+</body>
+</html>

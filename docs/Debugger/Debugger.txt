@@ -1,0 +1,87 @@
+HOW TO USE THE SQUAWK DEBUGGER 5/17/05
+
+This is interim dosumentation. Eventually we might add a NetBeans module to
+automate this.
+
+There are three processes to control to manage debugging:
+ 1) The Squawk VM, including the isolate to be debugged and the debug agent isolate.
+ 2) The Squawk Debug Proxy
+ 3) The debugger client of your choice. This may be jdb, NetBEans, jbuilder, eclipse, etc.
+
+
+
+STEP 1: Start Squawk VM in debug mode
+This involves telling squawk to load the debug agent isolate, arguments for the debug agent,
+and the name and arguments for the isolate to be debugged.
+
+Debug Agent Parameters:
+  Usage: SDA [-options] class [args...]
+  where options include:
+
+    -cp:<path>    specifies the class path for the application
+                  (default is file://.)
+    -suite:<suite> specifies the suite containing the application
+    -uri:<uri>     specifies the uri of the channel that the debug agent will
+                  listen on for a connection from a debugger proxy.
+                  (default is serversocket://:2800)
+    -v:<level>    turns on verbose mode.  'level' specifies the amount of output,
+                  the larger the number the more output that is generated.
+                  'level' can be from 1-9.
+
+> squawk -suite:debugger com.sun.squawk.debugger.sda.SDA \
+         -suite:file://debugger.suite  com.sun.squk.debugger.sda.TestApp
+
+
+EXAMPLE:
+./squawk -suite:debugger com.sun.squawk.debugger.sda.SDA \
+         -suite:file://debugger.suite -v:3 com.sun.squk.debugger.sda.TestApp
+
+
+
+STEP 2: Start the Squawk Debug Proxy (SDP)
+
+Debug Proxy Parameters:
+  Usage: SDP [-options] 
+  where options include:
+
+    -debugger:<uri> The URI of the channel that debug proxy will
+                   listen on for a connection from a JPDA debugger.
+                   Only specify -debugger OR -l, not both.
+                   (default is serversocket://:2900).
+    -l:<port> local port number that the debug proxy will
+                   listen on for a connection from a JPDA debugger.
+    -vm:<uri>      The URI of the channel to the VM running the .
+                   application to be debugged.
+                   (default is socket://localhost:2800).
+    -v:<level>     verbosity level of execution status messages
+    -cp:<path>     a list of paths separated by : where the
+                   debug proxy can class files
+                   (default is to use path provided by the VM)
+
+EXAMPLE:
+> java -jar build.jar sdproxy -v:3
+
+
+STEP 3: Start a Debugger (JDB)
+jdb needs to be started, telling it to connect to the socket openned by the proxy. By default this
+is port 2900. If the proxy and jdb are running on different machines, then you wil need to specify
+the proxy machine's name instead of "localhost".
+
+EXAMPLE:
+> jdb -attach localhost:2900
+
+MORE EXAMPLES:
+From jdb you can try out the following commands:
+  threads
+  where all
+  suspend
+  resume
+  classes
+  fields java.lang.VM
+  method java.lang.String
+  class java.lang.Thread
+  stop in java.lang.String.trim  (note: doesn't actually set breakpoint yet)
+  stop at java.lang.String:100   (note: doesn't actually set breakpoint yet)
+  catch java.lang.Throwable      (note: doesn't actually send exception notification yet)
+
+  help

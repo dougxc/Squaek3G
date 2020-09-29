@@ -1,0 +1,2608 @@
+/*MAKE_ASSERTIONS_FATAL[true]*/
+/*
+ * Copyright 2004 Sun Microsystems, Inc. All Rights Reserved.
+ *
+ * This software is the proprietary information of Sun Microsystems, Inc.
+ * Use is subject to license terms.
+ *
+ * This is a part of the Squawk JVM.
+ */
+package com.sun.squawk;
+
+import com.sun.squawk.Debugger.*;
+import com.sun.squawk.pragma.*;
+import com.sun.squawk.util.*;
+import com.sun.squawk.vm.*;
+import com.sun.squawk.VMThread.*;
+
+/**
+ * The Squawk implementation of threads.
+ *
+ * @author Nik Shaylor, Doug Simon
+ */
+public final class VMThread implements GlobalStaticFields {
+
+    /*-----------------------------------------------------------------------*\
+     *                          Global VM variables                          *
+    \*-----------------------------------------------------------------------*/
+
+    /**
+     * Flag to help early VM bringup.
+     */
+    private final static boolean FATAL_MONITOR_ERRORS = false;
+
+    /**
+     * The initial size (in words) of a thread's stack.
+     */
+    private final static int INITIAL_STACK_SIZE = 168;
+
+    /**
+     * The minimum size (in words) of a thread's stack. This constant accounts for the
+     * number of slots required for the meta-info slots at the beginning of the chunk
+     * plus the slots required to successfully make the initial call to VM.do_callRun()
+     *
+     * Update: this should also include a few more slots to be able to execute the
+     *         killThread() routine. Exactly how many is a guess, but this value should be increased
+     *         if there is ever a stack extension while processing killThread().
+     */
+    final static int MIN_STACK_SIZE = SC.limit + FP.FIXED_FRAME_SIZE + 60;
+
+    /**
+     * The current executing thread.
+     */
+    private static VMThread currentThread;
+
+    /**
+     * The thread to be executed after the next threadSwap().
+     */
+    private static VMThread otherThread;
+
+    /**
+     * The service thread for GC etc.
+     */
+    private static VMThread serviceThread;
+
+    /**
+     * The stack for the service thread. This address corresponds
+     * with the object pointer to the chunk. That is, it is {@link HDR#arrayHeaderSize}
+     * bytes past the memory chunk allocated for the stack. The native launcher
+     * which allocated this chunk will have written the length of the stack
+     * array header word. This will be used to subsequently format this block
+     * as an object of type {@link Klass#LOCAL_ARRAY}.
+     */
+    private static Address serviceStack;
+
+    /**
+     * The queue of runnable threads.
+     */
+    private static ThreadQueue runnableThreads;
+
+    /**
+     * The queue of timed waiting threads.
+     */
+    private static TimerQueue timerQueue;
+
+    /**
+     * The 'name' of the next thread.
+     */
+    private static int nextThreadNumber;
+
+    /**
+     * Hashtable of threads waiting for an event.
+     */
+    private static EventHashtable events;
+
+
+    /*-----------------------------------------------------------------------*\
+     *                            The public API                             *
+    \*-----------------------------------------------------------------------*/
+
+    /**
+     * The minimum priority that a thread can have.
+     */
+    public final static int MIN_PRIORITY = 1;
+
+   /**
+     * The default priority that is assigned to a thread.
+     */
+    public final static int NORM_PRIORITY = 5;
+
+    /**
+     * The maximum priority that a thread can have.
+     */
+    public final static int MAX_PRIORITY = 10;
+
+   /**
+     * Allocates a new <code>VMThread</code> object to support a given API Thread instance.
+     * <p>
+     * <b>This constructor should only be called from a java.lang.Thread constructor</b>.
+     *
+     * @param   apiThread  the API thread instance supported by this VM thread
+     */
+    public VMThread(Thread apiThread) {
+        Assert.always(apiThread != null);
+        this.apiThread    = apiThread;
+        this.threadNumber = nextThreadNumber++;
+        this.state        = NEW;
+        this.stackSize    = INITIAL_STACK_SIZE;
+        Object target = NativeUnsafe.getObject(apiThread, (int)FieldOffsets.java_lang_Thread$target);
+        if (target instanceof Isolate) {
+            this.isolate  = (Isolate)target;
+        } else {
+            this.isolate  = VM.getCurrentIsolate();
+        }
+        if (currentThread != null) {
+            priority = (byte)currentThread.getPriority();
+        } else {
+            priority = NORM_PRIORITY;
+        }
+        if (threadNumber == 0) {
+            this.name = "Thread-0";
+        } else {
+            this.name = "Thread-".concat(String.valueOf(threadNumber));
+        }
+    }
+
+    /**
+     * Returns a reference to the currently executing thread object.
+     *
+     * @return the currently executing thread
+     */
+    public static VMThread currentThread() {
+        return currentThread;
+    }
+
+    /**
+     * Sets the daemon state of the thread.
+     */
+    public void setDaemon(boolean value) {
+        isDaemon = value;
+    }
+
+    /**
+     * Gets the daemon state of the thread.
+     */
+    public boolean isDaemon() {
+        return isDaemon;
+    }
+
+    /**
+     * Adds a given thread to the timer queue.
+     *
+     * Note: this method may assign globals and threads into local variables and
+     * so should not be on the stack of a call that eventually calls 'reschedule'
+     *
+     * @param thread   the thread to add or null if the currentThread should be added
+     * @param millis   the time to wait on the queue
+     */
+    private static void addToTimerQueue(VMThread thread, long millis) {
+        if (thread == null) {
+            thread = currentThread;
+        }
+        thread.setInQueue(Q_TIMER);
+        timerQueue.add(thread, millis);
+    }
+
+    /**
+     * Causes the currently executing thread to sleep (temporarily cease
+     * execution) for the specified number of milliseconds. The thread
+     * does not lose ownership of any monitors.
+     *
+     * @param      millis   the length of time to sleep in milliseconds.
+     * @exception  InterruptedException if another thread has interrupted
+     *             the current thread.  The <i>interrupted status</i> of the
+     *             current thread is cleared when this exception is thrown.
+     * @see        java.lang.Object#notify()
+     */
+    public static void sleep(long millis) throws InterruptedException {
+        if (millis < 0) {
+            throw new IllegalArgumentException("negative sleep time");
+        }
+
+        // Was the thread interrupted?
+        currentThread.handlePendingInterrupt();
+
+        if (millis > 0) {
+/*if[FINALIZATION]*/
+            startFinalizers();
+/*end[FINALIZATION]*/
+            addToTimerQueue(null, millis);
+            reschedule();
+
+            // Was the thread interrupted?
+            currentThread.handlePendingInterrupt();
+        }
+    }
+
+    /**
+     * Adds a given thread to the queue of runnable threads.
+     *
+     * Note: this method may assign globals and threads into local variables and
+     * so should not be on the stack of a call that eventually calls 'reschedule'
+     *
+     * @param thread   the thread to add or null if the currentThread should be added
+     */
+    private static void addToRunnableThreadsQueue(VMThread thread) {
+        if (thread == null) {
+            thread = currentThread;
+        }
+        runnableThreads.add(thread);
+    }
+
+
+   /**
+    * Causes the currently executing thread object to temporarily pause
+    * and allow other threads to execute.
+    */
+    public static void yield() {
+/*if[FINALIZATION]*/
+        startFinalizers();
+/*end[FINALIZATION]*/
+        int event;
+        while ((event = VM.getEvent()) != 0) {
+            signalEvent(event);
+        }
+        addToRunnableThreadsQueue(null);
+        reschedule();
+    }
+
+    /**
+     * Causes this thread to begin execution; the Java Virtual Machine
+     * calls the <code>run</code> method of this thread.
+     * <p>
+     * The result is that two threads are running concurrently: the
+     * current thread (which returns from the call to the
+     * <code>start</code> method) and the other thread (which executes its
+     * <code>run</code> method).
+     *
+     * @exception  IllegalThreadStateException  if the thread was already started.
+     * @see        java.lang.Thread#run()
+     */
+    public void start() {
+
+       /*
+        * Check that the thread has not yet been started.
+        */
+        if (state != NEW) {
+            throw new IllegalThreadStateException();
+        }
+
+        /*
+         * Initialize the new thread and add it to the list of runnable threads.
+         */
+        baptiseThread();
+    }
+
+    /**
+     * Tests if this thread is alive. A thread is alive if it has
+     * been started and has not yet died.
+     *
+     * @return  <code>true</code> if this thread is alive;
+     *          <code>false</code> otherwise.
+     */
+    public final boolean isAlive() {
+        return state == ALIVE;
+    }
+
+    /**
+     * Changes the priority of this thread.
+     *
+     * @param newPriority priority to set this thread to
+     * @exception  IllegalArgumentException  If the priority is not in the
+     *             range <code>MIN_PRIORITY</code> to
+     *             <code>MAX_PRIORITY</code>.
+     * @see        #getPriority
+     * @see        java.lang.Thread#getPriority()
+     * @see        java.lang.Thread#MAX_PRIORITY
+     * @see        java.lang.Thread#MIN_PRIORITY
+     */
+    public final void setPriority(int newPriority) {
+        if (newPriority > MAX_PRIORITY || newPriority < MIN_PRIORITY) {
+            throw new IllegalArgumentException();
+        }
+        priority = (byte)newPriority;
+    }
+
+    /**
+     * Returns this thread's priority.
+     *
+     * @return  this thread's name.
+     * @see     #setPriority
+     * @see     java.lang.Thread#setPriority(int)
+     */
+    public final int getPriority() {
+        return priority;
+    }
+
+    /**
+     * Returns the current number of active threads in the VM.
+     *
+     * @return the current number of active threads
+     */
+    public static int activeCount() {
+        return runnableThreads.size() + 1;
+    }
+
+    /**
+     * Waits for this thread to die.
+     *
+     * @exception  InterruptedException if another thread has interrupted
+     *             the current thread.  The <i>interrupted status</i> of the
+     *             current thread is cleared when this exception is thrown.
+     */
+    public final void join() throws InterruptedException {
+        if (this != currentThread && isAlive()) {
+
+            // Was the current thread interrupted?
+            currentThread.handlePendingInterrupt();
+
+            Assert.that(currentThread.nextThread == null);
+            currentThread.nextThread = this.joiners;
+            this.joiners = currentThread;
+            Assert.that(currentThread.waitingToJoin == null);
+            currentThread.waitingToJoin = this;
+            currentThread.setInQueue(VMThread.Q_JOIN);
+            reschedule();
+
+            // Was the current thread interrupted?
+            currentThread.handlePendingInterrupt();
+        }
+    }
+
+    /**
+     * Waits for an isolate to stop.
+     *
+     * @param isolate the isolate to wait for
+     */
+    final static void isolateJoin(Isolate isolate) {
+        if (currentThread.isolate == isolate) {
+            throw new RuntimeException("Isolate cannot join itself");
+        }
+        if (!isolate.isHibernated()) {
+            Assert.that(currentThread.nextThread == null);
+            currentThread.setInQueue(VMThread.Q_ISOLATEJOIN);
+            isolate.addJoiner(currentThread);
+            reschedule();
+        }
+    }
+
+    /**
+     * Hibernate all the threads in the isolate.
+     *
+     * @param isolate the isolate whose threads are to be hibernated
+     */
+    private static void hibernateIsolate0(Isolate isolate) {
+
+        /*
+         * Enable all the threads waiting for the isolate to stop.
+         */
+        VMThread list = isolate.getJoiners();
+        startJoiners(list, VMThread.Q_ISOLATEJOIN);
+
+        /*
+         * Prune the runnable threads and add them to the isolate.
+         */
+        runnableThreads.prune(isolate);
+
+        /*
+         * Prune the timer threads and add them to the isolate.
+         */
+        timerQueue.prune(isolate);
+
+        /*
+         * Iterate through the events
+         */
+        events.prune(isolate);
+    }
+
+    /**
+     * Visit method for EventHashtable visitor.
+     *
+     * @param key the key
+     * @param value the value
+     */
+/*
+    public void visitIntHashtable(int key, Object value, Object context) {
+        Isolate isolate = (Isolate)context;
+        Thread t = (Thread)value;
+        if (t.isolate == isolate) {
+            Thread t2 = findEvent(key);
+            Assert.that(t == t2);
+            Assert.that(t.nextThread == null);
+            t.setInQueue(Thread.HIBERNATEDRUN);
+            isolate.addToHibernatedRunThread(t);
+        }
+    }
+*/
+    /**
+     * Hibernate all the threads in a given isolate.
+     *
+     * @param isolate  the isolate whose threads are to be hibernated
+     * @param forExit  true if the isolate is being exited
+     */
+    static void hibernateIsolate(Isolate isolate, boolean forExit) {
+
+        /*
+         * Do things to other threads in separate function so that there are
+         * no dangling references to other threads in this activation record.
+         */
+        hibernateIsolate0(isolate);
+
+        /*
+         * Add the current thread if it is in this isolate.
+         */
+        if (currentThread.isolate == isolate) {
+            Assert.that(currentThread.nextThread == null);
+            currentThread.setInQueue(VMThread.Q_HIBERNATEDRUN);
+            isolate.addToHibernatedRunThread(currentThread);
+            reschedule();
+        }
+    }
+
+    /**
+     * Unhibernate the isolate.
+     *
+     * @param isolate the isolate
+     */
+    final static void unhibernateIsolate(Isolate isolate) {
+
+//int rcount = 0;
+//int tcount = 0;
+        /*
+         * Add back the timer threads.
+         */
+        VMThread threads = isolate.getHibernatedTimerThreads();
+        while (threads != null) {
+            VMThread thread = threads;
+//System.out.println("unhibernating timer thread "+thread);
+//tcount++;
+            threads = thread.nextTimerThread;
+            thread.nextTimerThread = null;
+            long time = thread.time;
+            if (time == 0) {
+                time = 1;
+            }
+            timerQueue.add(thread, time);
+        }
+
+        /*
+         * Add back the runnable threads.
+         */
+        threads = isolate.getHibernatedRunThreads();
+        while (threads != null) {
+            VMThread thread = threads;
+            threads = thread.nextThread;
+            thread.nextThread = null;
+            thread.setNotInQueue(VMThread.Q_HIBERNATEDRUN);
+//System.out.println("unhibernating run thread "+thread);
+//rcount++;
+            addToRunnableThreadsQueue(thread);
+        }
+
+//System.out.println("unhibernated "+rcount+" rthreads");
+//System.out.println("unhibernated "+tcount+" tthreads");
+    }
+
+    /**
+     * Gets the name of this thread. If {@link #setName} has never been called for this
+     * thread, the return value will be of the from "Thread-<n>" where 'n' is a unique numeric
+     * identifier for this thread.
+     *
+     * @return thread name in standard format
+     */
+    public final String getName() {
+        return name;
+    }
+
+    /**
+     * Sets the name of this thread.
+     *
+     * @param name  the new name for this thread
+     */
+    public final void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Returns a string representation of this thread, including a unique number
+     * that identifies the thread and the thread's priority.
+     *
+     * @return  a string representation of this thread.
+     */
+    public String toString() {
+        return getName().
+            concat(" (pri=").
+            concat(String.valueOf(getPriority())).
+            concat(")]");
+    }
+
+
+    /*-----------------------------------------------------------------------*\
+     *                              Thread state                             *
+    \*-----------------------------------------------------------------------*/
+
+    /**
+     * Thread state values.
+     */
+    private final static byte NEW = 0, ALIVE = 1, DEAD = 2;
+
+    /**
+     * Queue names.
+     */
+    final static byte Q_MONITOR = 1, Q_CONDVAR = 2, Q_RUN = 3, Q_EVENT = 4, Q_JOIN = 5, Q_ISOLATEJOIN = 6, Q_HIBERNATEDRUN = 7, Q_TIMER = 8;
+
+    /**
+     * The Isolate under which the thread is running
+     */
+    private final Isolate isolate;
+
+    /**
+     * The execution stack for the thread.
+     */
+    private Object stack;
+
+    /**
+     * The size of the stack that will be created for this thread.
+     */
+    private final int stackSize;
+
+    /**
+     * The API thread instance.
+     */
+    private final Thread apiThread;
+
+    /**
+     * The state of the thread.
+     */
+    private byte state;
+
+    /**
+     * The execution priority.
+     */
+    byte priority;
+
+    /**
+     * The queue the thread is in.
+     */
+    private byte inqueue;
+
+    /**
+     * Reference used for enqueueing in the ready, monitor wait, condvar wait, or join queues.
+     */
+    VMThread nextThread;
+
+    /**
+     * The thread that this thread (and possibly other threads) are waiting to join.
+     */
+    private VMThread waitingToJoin;
+
+    /**
+     * Flag to show if thread is a daemon.
+     */
+    private boolean isDaemon;
+
+    /**
+     * Reference used for enqueueing in the timer queue.
+     */
+    VMThread nextTimerThread;
+
+    /**
+     * Threads waiting for this thread to die.
+     */
+    private VMThread joiners;
+
+    /**
+     * Time to emerge from the timer queue.
+     */
+    long time;
+
+    /**
+     * The numeric identifier of the thread. This is only unique within this thread's isolate.
+     */
+    private final int threadNumber;
+
+    /**
+     * The name of the thread;
+     */
+    private String name;
+
+    /**
+     * The breakpoint hit by this currently being reported to an attached debugger.
+     */
+    private HitBreakpoint hitBreakpoint;
+
+    /**
+     * This contains information regarding the currently active stepping of this thread.
+     * It will be null if this thread is not stepping.
+     */
+    private SingleStep step;
+
+    /**
+     * The monitor when the thread is in the condvar queue.
+     */
+    Monitor monitor;
+
+    /**
+     * The interrupt status.
+     */
+    boolean pendingInterrupt;
+
+    /**
+     * The offset (in bytes) from the top of this thread's stack of the inner most
+     * system frame before the application entry point of the thread. That is, the
+     * frame from which the {@link Thread#run} or the <code>static void main(String[])</code>
+     * method was called.
+     */
+    private Offset appThreadTop;
+
+/*if[SMARTMONITORS]*/
+    /**
+     * Saved monitor nesting depth.
+     */
+    private short monitorDepth;
+
+    /**
+     * Maximum nesting depth.
+     */
+    private final static short MAXDEPTH = Short.MAX_VALUE;
+/*else[SMARTMONITORS]*/
+//  int monitorDepth;
+//  private final static int   MAXDEPTH = Integer.MAX_VALUE;
+/*end[SMARTMONITORS]*/
+
+    /*-----------------------------------------------------------------------*\
+     *                           Debugger support                            *
+    \*-----------------------------------------------------------------------*/
+
+    /**
+     * An ExecutionPoint instance encapsulates the details of a point of execution
+     * including the thread, a frame offset, the method to which the
+     * frame pertains and the bytecode index of an instruction in the method.
+     */
+    public static class ExecutionPoint {
+
+        /**
+         * The offset (in bytes) from the top of the stack of this location.
+         */
+        public final Offset frame;
+
+        /**
+         * The bytecode index of this location.
+         */
+        public final Offset bci;
+
+        /**
+         * The method of this location.
+         */
+        public final Object mp;
+
+        public ExecutionPoint(Offset frame, Offset bci, Object mp) {
+            this.frame = frame;
+            this.bci = bci;
+            this.mp = mp;
+        }
+
+        /**
+         * Prevents use of ExecutionPoint instances as keys in a hash table.
+         */
+        public int hashCode() {
+            throw new RuntimeException("ExecutionPoints cannot be keys in a hashtable");
+        }
+
+        public String toString() {
+            return "frame=" + frame.toPrimitive() +
+                ",bci=" + bci.toPrimitive() + ",mp=" + Address.fromObject(mp).toUWord().toPrimitive() + "]";
+        }
+    }
+
+    /**
+     * Debugger suspension is implemented by disallowing reschedule() from choosing to
+     * run a thread that has a positive debugSuspendCount.
+     *
+     * The thread being suspended or resumed may be on any queue, including the run
+     * queue, or may move from one queue to another, but won't run until it is both
+     * on the run queue, AND has a zero debugSuspendCount.
+     */
+    private int debuggerSuspendCount;
+
+    /**
+     * The method and frame context of the debugger event currently being reported to
+     * the debugger subsystem.
+     */
+    private ExecutionPoint eventEP;
+
+    /**
+     * Gets the value of the debugger suspension counter for this thread.
+     *
+     * @return the suspension count for this thread
+     */
+    public final int getDebuggerSuspendCount() {
+        Assert.that(debuggerSuspendCount >= 0);
+        return debuggerSuspendCount;
+    }
+
+    /**
+     * Increases the suspension count of this thread.
+     *
+     * @return the new suspension count for this thread
+     */
+    public final int suspendForDebugger() {
+        Assert.that(debuggerSuspendCount >= 0);
+        Assert.that(this != currentThread);
+        return ++debuggerSuspendCount;
+    }
+
+    /**
+     * Decreases the suspension count of this thread.
+     *
+     * @param forDetach  if true, the count is set to 0
+     * @return the new suspension count for this thread
+     */
+    public final int resumeForDebugger(boolean forDetach) {
+        Assert.that(this != currentThread);
+        if (forDetach){
+            debuggerSuspendCount = 0;
+        } else {
+            if (debuggerSuspendCount > 0) {
+                debuggerSuspendCount--;
+            }
+        }
+        Assert.that(debuggerSuspendCount >= 0);
+        return debuggerSuspendCount;
+    }
+
+    /**
+     * Gets the method and frame context of this thread at which a debugger event occurred.
+     *
+     * @return null if this thread is not currently reporting an event to the debugger subsystem
+     */
+    public ExecutionPoint getEventExecutionPoint() {
+//VM.println("get eventEP: " + eventEP + " debuggerSuspendCount = " + debuggerSuspendCount);
+        return eventEP;
+    }
+
+    /**
+     * Gets the combined values for <code>state</code> and <code>queue</code>.
+     *
+     * @return the queue in the least significant byte, and the state in the next least significant byte.
+     */
+    public final int getInternalStatus() {
+        return (state << 8) | inqueue;
+    }
+
+    /**
+     * Returns the step info object.
+     */
+    public final SingleStep getStep() {
+        return step;
+    }
+
+    /**
+     * Sets the object that will put this thread into single stepping mode the next time
+     * it is scheduled to run.
+     *
+     * @param  step  the details of the requested step
+     */
+    public final void setStep(SingleStep step) {
+        Assert.that(this != currentThread);
+        Assert.that(this.step == null, "overlapping single step request detected too late");
+        this.step = step;
+    }
+
+    /**
+     * Removes the object (if any) that is keeping this thread in single stepping mode.
+     */
+    public final void clearStep() {
+        step = null;
+    }
+
+    /**
+     * Reports a non-exception breakpoint hit on this thread to a debugger. This thread is
+     * blocked until the event manager in the debugger has processed the event.
+     *
+     * @param hitFO    the frame in which the breakpoint was hit
+     * @param hitBCI   the bytecode index of the instruction at which the breakpoint was hit
+     * @param debugger the debugger to report the exception to
+     * @return the object used to report the breakpoint
+     */
+    void reportBreakpoint(Offset hitFO, Offset hitBCI, Debugger debugger) {
+        Assert.that(hitBreakpoint == null);
+        hitBreakpoint = new HitBreakpoint(this, hitFO, hitBCI);
+        Object mp = hitBreakpoint.getMethod();
+
+        // Cannot report a breakpoint for this thread if it has already been removed
+        // from the runnable queue. This will occur if there is a breakpoint in the
+        // thread switch/breakpoint reporting code and we are already reporting
+        // another breakpoint
+        if (this.inqueue == 0) {
+/*if[DEBUG_CODE_ENABLED]*/
+VM.println("=== In reportBreakpoint():");
+hitBreakpoint.dumpState();
+VM.print("   bcount: ");
+VM.println(VM.branchCount());
+/*end[DEBUG_CODE_ENABLED]*/
+
+            eventEP = hitBreakpoint.getLocation();
+//VM.println("set eventEP: " + eventEP);
+            debugger.notifyEvent(new Debugger.BreakpointEvent(eventEP));
+//VM.println("clearing eventEP: " + eventEP);
+            eventEP = null;
+
+            // This thread has finished reporting the breakpoint and has been
+            // resumed by the debugger.
+        }
+
+        if (hitBreakpoint != null) {
+            hitBreakpoint.setState(HitBreakpoint.BP_REPORTED);
+        }
+    }
+
+    /**
+     * Records an exception that must be reported to a debugger once this thread
+     * is scheduled to be run. This call is always made on the service thread.
+     *
+     * @param exception the exception thrown/raised
+     * @param throwFO   the frame in which the exception was thrown
+     * @param throwBCI  the bytecode index of the instruction at which the exception was thrown
+     * @param catchFO   the frame that will catch exception
+     * @param catchBCI  the bytecode index of the exception handler
+     * @return the object that will be used to report the exception
+     */
+    HitBreakpoint recordExceptionToReport(Offset throwFO, Offset throwBCI, Throwable exception, Offset catchFO, Offset catchBCI) {
+        Assert.that(hitBreakpoint == null);
+        hitBreakpoint = new HitBreakpoint(this, throwFO, throwBCI, exception, catchFO, catchBCI);
+/*if[DEBUG_CODE_ENABLED]*/
+VM.println("=== In recordExceptionToReport: HitBreakpoint.EXC_HIT:");
+hitBreakpoint.dumpState();
+/*end[DEBUG_CODE_ENABLED]*/
+        return hitBreakpoint;
+    }
+
+    /**
+     * Reports an exception breakpoint hit on this thread to a debugger. This thread is
+     * blocked until the event manager in the debugger has processed the event.
+     *
+     * @param debugger the debugger to report the exception to
+     * @return the object used to report the breakpoint
+     */
+    void reportException(Debugger debugger) throws Throwable {
+        HitBreakpoint hbp = hitBreakpoint;
+
+/*if[DEBUG_CODE_ENABLED]*/
+VM.println("=== In reportException():");
+hbp.dumpState();
+VM.print("   bcount: ");
+VM.println(VM.branchCount());
+/*end[DEBUG_CODE_ENABLED]*/
+
+        Throwable exception = hbp.getException();
+        Assert.that(exception != null);
+
+        try {
+            eventEP = hbp.getLocation();
+//VM.println("set eventEP: " + eventEP);
+            debugger.notifyEvent(new Debugger.ExceptionEvent(exception, eventEP, hbp.getCatchLocation(), hbp.isCaught()));
+//VM.println("clearing eventEP: " + eventEP);
+            eventEP = null;
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
+        Assert.that(hitBreakpoint != null);
+/*if[DEBUG_CODE_ENABLED]*/
+VM.println("=== after reportException():");
+hbp.dumpState();
+VM.print("   bcount: ");
+VM.println(VM.branchCount());
+/*end[DEBUG_CODE_ENABLED]*/
+        hbp.setState(HitBreakpoint.EXC_REPORTED);
+        throw exception; // rethrow original exception
+    }
+
+    /**
+     * Reports completion of a step on this thread to a debugger. This thread is
+     * blocked until the event manager in the debugger has processed the event.
+     *
+     * @param fo   offset (in bytes) from top of stack of the frame stepped to
+     * @param bci  the bytecode index of the instruction stepped to
+     */
+    void reportStepEvent(Offset fo, Offset bci) {
+
+        Debugger debugger = VM.getCurrentIsolate().getDebugger();
+        Assert.that(!fo.isZero());
+        Object mp = VM.getMP(frameOffsetAsPointer(fo));
+        Assert.that(mp != null);
+
+/*if[DEBUG_CODE_ENABLED]*/
+VM.println("=== In reportStepEvent() " + step);
+VM.print("Proposing stepEvent @ mp:");
+VM.printAddress(mp);
+VM.print(" bci: ");
+VM.printOffset(bci);
+VM.println();
+/*end[DEBUG_CODE_ENABLED]*/
+
+        eventEP = new ExecutionPoint(fo, bci, mp);
+//VM.println("set eventEP: " + eventEP);
+        debugger.notifyEvent(new Debugger.SingleStepEvent(eventEP));
+//VM.println("clearing eventEP: " + eventEP);
+        eventEP = null;
+    }
+
+    /**
+     * Gets the hit breakpoint info for this thread.
+     *
+     * @return  the hit breakpoint info or null if this thread is not currently reporting a breakpoint.
+     */
+    HitBreakpoint getHitBreakpoint() {
+        return hitBreakpoint;
+    }
+
+    /**
+     * Clears the object used to report a breakpoint hit.
+     */
+    public void clearBreakpoint() {
+        hitBreakpoint = null;
+    }
+
+    void setAppThreadTop(Offset fp) {
+        appThreadTop = fp;
+    }
+
+    Offset getAppThreadTop() {
+        return appThreadTop;
+    }
+
+    /*-----------------------------------------------------------------------*\
+     *                           The implementation                          *
+    \*-----------------------------------------------------------------------*/
+
+    /**
+     * Initialize the threading system.
+     */
+    static void initializeThreading() {
+        nextThreadNumber    = 0;
+        runnableThreads     = new ThreadQueue();
+        timerQueue          = new TimerQueue();
+        events              = new EventHashtable();
+        currentThread       = asVMThread(new Thread()); // Startup using a dummy thread
+        serviceThread       = currentThread;
+
+        /*
+         * Convert the block of memory allocated for the service thread's stack into a
+         * proper object of type Klass.LOCAL_ARRAY.
+         */
+        int length = NativeUnsafe.getUWord(serviceStack, HDR.length).toInt();
+        Assert.always(length > 0);
+        GC.setHeaderClass(serviceStack, Klass.LOCAL_ARRAY);
+        GC.setHeaderLength(serviceStack, length);
+        serviceThread.stack = serviceStack.toObject();
+    }
+
+    /**
+     * Gets the isolate of the thread.
+     *
+     * @return the isolate
+     */
+    public Isolate getIsolate() {
+        return isolate;
+    }
+
+    public Thread getAPIThread() {
+        return apiThread;
+    }
+
+    public static VMThread asVMThread(Thread thread) {
+        if (thread == null) {
+            return null;
+        }
+        return (VMThread)NativeUnsafe.getObject(thread, (int)FieldOffsets.java_lang_Thread$vmThread);
+    }
+
+    /**
+     * Determines if this thread is the service thread.
+     */
+    boolean isServiceThread() {
+        return this == serviceThread;
+    }
+
+    /**
+     * Gets the number of this thread which is only guaranteed to be unique
+     * within this thread's isolate.
+     *
+     * @return an integer identifier for this thread
+     */
+    public final int getThreadNumber() {
+        return threadNumber;
+    }
+
+    /**
+     * Special thread starter that reschedules the currently executing thread.
+     */
+    final void primitiveThreadStart() {
+        start();
+        rescheduleNext();
+    }
+
+/*if[FINALIZATION]*/
+    /**
+     * Start any pending finalizers.
+     */
+    private static void startFinalizers() {
+        while (true) {
+            Finalizer finalizer = currentThread.isolate.removeFinalizer();
+            if (finalizer == null) {
+                 break;
+            }
+            try {
+                new Thread(finalizer).start();
+            } catch(OutOfMemoryError ex) {
+                currentThread.isolate.addFinalizer(finalizer); // Try again sometime later.
+                return;
+            }
+        }
+    }
+/*end[FINALIZATION]*/
+
+    /**
+     * Prepare a thread for execution.
+     */
+    private void baptiseThread() {
+        Assert.that(currentThread != null);
+        Assert.always(state == NEW);
+        stack = newStack(stackSize, this, true);
+        if (stack == null) {
+            throw VM.getOutOfMemoryError();
+        }
+
+//VM.print("Thread::baptiseThread - stack size = ");
+//VM.println(stackSize);
+        state = ALIVE;
+
+//VM.print("Thread::baptiseThread - owner of stack chunk ");
+//VM.printAddress(stack);
+//VM.print(" = ");
+//VM.printAddress(NativeUnsafe.getObject(stack, SC.owner));
+//VM.println();
+
+        isolate.addThread(this);
+        addToRunnableThreadsQueue(this);
+
+        if (VM.isThreadingInitialized()) {
+            Debugger debugger = VM.getCurrentIsolate().getDebugger();
+            if (debugger != null) {
+                debugger.notifyEvent(new Debugger.Event(Debugger.Event.THREAD_START, this));
+            }
+        }
+    }
+
+    /**
+     * End thread execution.
+     */
+    private void killThread(boolean nicely, boolean uncaughtException) {
+        Assert.always(state == ALIVE);
+        VMThread list = joiners;
+        joiners = null;
+        startJoiners(list, VMThread.Q_JOIN);
+
+        if (VM.isThreadingInitialized()) {
+            Debugger debugger = VM.getCurrentIsolate().getDebugger();
+            if (debugger != null) {
+                debugger.notifyEvent(new Debugger.Event(Debugger.Event.THREAD_END, this));
+            }
+        }
+
+        state = DEAD;
+
+        // Remove the connection between the stack chunk and this thread which will
+        // indicate to the garbage collector that the stack chunk is dead
+        NativeUnsafe.setObject(stack, SC.owner, null);
+
+//VM.print("Thread::killThread - owner of stack chunk "); VM.printAddress(stack); VM.print(" = "); VM.printAddress(NativeUnsafe.getObject(stack, SC.owner)); VM.println();
+        if (nicely) {
+            isolate.removeThread(this, uncaughtException);
+        }
+
+        reschedule();
+    }
+
+    /**
+     * Zeros the pointer to the stack chunk.
+     */
+    void zeroStack() {
+        stack = null;
+    }
+
+    /**
+     * Starts a list of waiting threads.
+     *
+     * @param list the list of waiting threads
+     * @param queueName the queue name (JOIN, or ISOLATEJOIN)
+     */
+    private static void startJoiners(VMThread list, byte queueName) {
+        while (list != null) {
+            VMThread next = list.nextThread;
+            list.nextThread = null;
+            list.waitingToJoin = null;
+            list.setNotInQueue(queueName);
+            if (list.isolate.isAlive()) {
+                addToRunnableThreadsQueue(list);
+            }
+            list = next;
+        }
+    }
+
+    /**
+     * Get the thread's stack
+     *
+     * @return the stack
+     */
+    final Object getStack() throws ForceInlinedPragma {
+        return stack;
+    }
+
+    /**
+     * Converts an address within the stack of this thread to an offset (in bytes)
+     * relative to the top of the stack.
+     *
+     * @param fp  the address to convert
+     * @return the value of <code>fp</code> as an offset
+     */
+    final Offset framePointerAsOffset(Address fp) throws ForceInlinedPragma {
+        int size = GC.getArrayLengthNoCheck(stack);
+        Address stackEnd = Address.fromObject(stack).add(size * HDR.BYTES_PER_WORD);
+/*
+if (!(fp.hi(Address.fromObject(stack)) && fp.loeq(stackEnd))) {
+    VM.print("fp=");
+    VM.printAddress(fp);
+    VM.print(" stack=");
+    VM.printAddress(stack);
+    VM.print(" stackEnd=");
+    VM.printAddress(stackEnd);
+    VM.println();
+}
+*/
+        Assert.that(fp.hi(Address.fromObject(stack)) && fp.loeq(stackEnd));
+        return stackEnd.diff(fp);
+    }
+
+    /**
+     * Converts an offset (in bytes) relative to the top of this thread's stack
+     * to an address within the stack.
+     *
+     * @param fp   the offset to convert
+     * @return the offset as an address
+     */
+    final Address frameOffsetAsPointer(Offset fp) throws ForceInlinedPragma {
+        int size = GC.getArrayLengthNoCheck(stack) * HDR.BYTES_PER_WORD;
+        Assert.that(fp.ge(Offset.zero()) && fp.lt(Offset.fromPrimitive(size)));
+        Address stackEnd = Address.fromObject(stack).add(size);
+        return stackEnd.subOffset(fp);
+    }
+
+    /**
+     * Allocates a new stack.
+     *
+     * @param size       the size of the stack in words
+     * @param owner      the owner of the new stack
+     * @param userThread true if call is made on a user mode thread
+     * @return the stack or null if none could be allocated
+     */
+    private static Object newStack(int size, VMThread owner, boolean userThread) {
+        Object stack = GC.getExcessiveGC() ? null : GC.newStack(size, owner);
+        if (stack == null) {
+            if (userThread) {
+                VM.collectGarbage(false);
+            } else {
+                GC.collectGarbage(false);
+            }
+            stack = GC.newStack(size, owner);
+        }
+        return stack;
+    }
+
+    /**
+     * Extends the stack of the currently executing thread.
+     * <p>
+     * This code is called from the core VM using the service stack and it is very important
+     * that there are no non-null pointers in the inner most activation record on the stack.
+     * This is guaranteed by the fact that this inner most method will *always* be at the
+     * very first instruction which will *always* be an EXTEND instruction.
+     *
+     * @param overflow the number of words by which the frame of the inner method
+     *        overflows the current stack size
+     * @return false if the allocation failed
+     */
+    static boolean extendStack(int overflow) {
+        /*
+         * Stack extension will not work if com.sun.squawk.Klass has not been initialized as
+         * the Klass.LOCAL static variable will be null.
+         */
+        Assert.always(VM.isCurrentIsolateInitialized(), "cannot extend stack until com.sun.squawk.Class is initialized");
+
+        /*
+         * Allocate a new stack and copy the contents of the old stack.
+         */
+        final int oldSize = GC.getArrayLength(otherThread.stack);
+        int minSize = oldSize + overflow;
+        int newSize = oldSize * 2;
+        if (newSize < minSize) {
+            newSize = minSize * 2;
+        }
+        Object newStack = newStack(newSize, otherThread, false);
+        if (newStack == null) {
+            return false;
+        } else {
+            Object oldStack = otherThread.stack;
+            GC.stackCopy(oldStack, newStack);
+            otherThread.stack = newStack;
+            Assert.that(GC.getKlass(NativeUnsafe.getAddress(NativeUnsafe.getAddress(newStack, SC.lastFP), FP.method)) == Klass.BYTECODE_ARRAY);
+            return true;
+        }
+    }
+
+    /**
+     * Call the run() method of a thread. This is called by the VM when a new thread is started.
+     * The call sequence is that Thread.start() calls Thread.reschedule() which calls VM.switchToThread()
+     * which calls VM.callRun() which calls this function.
+     *
+     * @throws NotInlinedPragma as this method saves the current frame pointer
+     */
+    final void callRun() throws NotInlinedPragma {
+        boolean uncaughtException = false;
+        try {
+            try {
+                VMThread thread = VMThread.currentThread;
+                thread.appThreadTop = thread.framePointerAsOffset(VM.getFP());
+                apiThread.run();
+            } catch (OutOfMemoryError e) {
+                uncaughtException = true;
+                VM.print("Uncaught out of memory error on thread ");
+                if (name == null) {
+                    VM.print("Thread-");
+                    VM.print(threadNumber);
+                    VM.println();
+                } else {
+                    VM.println(name);
+                }
+                isolate.abort(999);
+            } catch (Throwable ex) {
+                uncaughtException = true;
+                long bc = VM.branchCount();
+                System.err.println("Uncaught exception after " + bc + " branches");
+                System.err.println(ex);
+                ex.printStackTrace();
+            }
+/*
+VM.print("killing thread ");
+VM.print(threadNumber);
+VM.print(", bcount = ");
+VM.println(VM.branchCount());
+*/
+            killThread(true, uncaughtException);
+        } catch (OutOfMemoryError e) {
+            // This almost certainly means that the value of MIN_STACK_SIZE should be increased
+            // as there should always be enough stack left to complete the killThread() call
+            VM.println("Uncaught out of memory error while killing thread - aborting isolate");
+            isolate.abort(999);
+            killThread(false, uncaughtException);
+        } catch (Throwable e) {
+            VM.print("Uncaught ");
+            VM.print(GC.getKlass(e).getInternalName());
+            VM.print(" while killing thread - aborting isolate [branch count = ");
+            VM.print(VM.branchCount());
+            VM.println("]");
+            isolate.abort(999);
+            killThread(false, uncaughtException);
+        }
+        VM.fatalVMError();
+    }
+
+    /**
+     * Primitive method to choose the next executable thread.
+     */
+    private static void rescheduleNext() {
+        Assert.that(GC.isSafeToSwitchThreads());
+        VMThread thread = null;
+
+        /*
+         * Loop until there is something to do.
+         */
+        while (true) {
+
+            /*
+             * Add any threads that are ready to be restarted.
+             */
+            int event;
+            while ((event = VM.getEvent()) != 0) {
+                signalEvent(event);
+            }
+
+            /*
+             * Add any threads waiting for a certain time that are now due.
+             */
+            while ((thread = timerQueue.next()) != null) {
+                Assert.that(thread.isAlive());
+                Monitor monitor = thread.monitor;
+                /*
+                 * If the thread is wait()ing on a monitor then remove it
+                 * from the conditional variable wait queue.
+                 */
+                if (monitor != null) {
+                    monitor.removeCondvarWait(thread);
+                    /*
+                     * Reclaim the lock on the monitor. If this is available
+                     * then the thread will be added to the run queue.
+                     */
+                    addMonitorWait(monitor, thread);
+                } else {
+                    /*
+                     * Otherwise it is just waking up from a sleep() so it is now
+                     * ready to run.
+                     */
+                    thread.setNotInQueue(Q_TIMER);
+                    addToRunnableThreadsQueue(thread);
+                }
+            }
+
+            /*
+             * Break if there is something to do.
+             */
+            if ((thread = runnableThreads.next()) != null) {
+                break;
+            }
+
+            /*
+             * Wait for an event or until timeout.
+             */
+            long delta = timerQueue.nextDelta();
+            if (delta > 0) {
+                if (delta == Long.MAX_VALUE && events.size() == 0) {
+                    /*
+                     * This situation will usually only come about if the bootstrap
+                     * isolate called System.exit() instead of VM.stopVM(). However,
+                     * it will also occur if an isolate is dead-locked and all other
+                     * isolates are waiting for it to complete.
+                     */
+                    Assert.shouldNotReachHere("Dead-locked system: no schedulable threads");
+                }
+               	VM.waitForEvent(delta);
+            }
+        }
+
+        /*
+         * Set the next thread.
+         */
+        Assert.that(thread != null);
+        otherThread = thread;
+    }
+
+    /**
+     * Context switches to another thread.
+     *
+     * @throws NotInlinedPragma  as the frame of this method will be the inner most frame on the
+     *                           current thread's stack. The inner most frame on any stack does
+     *                           not have it's local variables scanned by the garbage collector.
+     *                           As such, this method <b>must not</b> use any local variables.
+     */
+    private static void reschedule() throws NotInlinedPragma {
+        fixupPendingMonitors();  // Convert any pending monitors to real ones
+        rescheduleNext();        // Select the next thread
+        VM.threadSwitch();       // and switch
+    }
+
+    /**
+     * Get the 'other' thread.
+     *
+     * @return the other thread
+     */
+    static VMThread getOtherThread() {
+        return otherThread;
+    }
+
+    /**
+     * Get the 'other' thread.
+     *
+     * @return the other thread
+     */
+    static Object getOtherThreadStack() {
+        return otherThread.stack;
+    }
+
+    /**
+     * Block a thread waiting for an event.
+     *
+     * Note: The bulk of the work is done in this function so that there are
+     * no dangling references to other threads or globals in the activation record
+     * that calls reschedule().
+     *
+     * @param event the event number to wait for
+     */
+    private static void waitForEvent0(int event) {
+/*if[FINALIZATION]*/
+        startFinalizers();
+/*end[FINALIZATION]*/
+        VMThread t = currentThread;
+        t.setInQueue(VMThread.Q_EVENT);
+        events.put(event, t);
+        Assert.that(t.nextThread == null);
+    }
+
+    /**
+     * Block a thread waiting for an event.
+     *
+     * @param event the event number to wait for
+     */
+    static void waitForEvent(int event) {
+        waitForEvent0(event);
+        reschedule();
+        Assert.that(!currentThread.inQueue(VMThread.Q_EVENT) || currentThread.nextThread == null);
+    }
+
+    /**
+     * Restart a thread blocked on an event.
+     *
+     * @param event the event number to unblock
+     */
+    private static void signalEvent(int event) {
+        VMThread thread = findEvent(event);
+        if (thread != null) {
+            addToRunnableThreadsQueue(thread);
+        }
+    }
+
+    /**
+     * Finds and removes a thread blocked on an event.
+     *
+     * @param event the event number to unblock
+     */
+    static VMThread findEvent(int event) {
+        VMThread thread = (VMThread)events.remove(event);
+        if (thread != null) {
+            thread.setNotInQueue(VMThread.Q_EVENT);
+            Assert.that(thread.nextThread == null);
+        }
+        return thread;
+    }
+
+    /**
+     * Throws an IllegalMonitorStateException.
+     *
+     * @param owner the current owner of the monitor
+     */
+    private static void throwIllegalMonitorStateException(VMThread owner) {
+        if (FATAL_MONITOR_ERRORS) {
+            VM.fatalVMError();
+        }
+        throw new IllegalMonitorStateException();
+    }
+
+    /**
+     * Queue a thread onto a monitor until the monitor is not locked.
+     *
+     * @param monitor the monitor to queue onto.
+     * @param thread the thread to queue.
+     */
+    private static void addMonitorWait(Monitor monitor, VMThread thread) {
+        Assert.that(thread.monitorDepth > 0);
+
+        /*
+         * Add to the wait queue.
+         */
+        monitor.addMonitorWait(thread);
+
+        /*
+         * If the wait queue has no owner then try and start a waiting thread.
+         */
+        if (monitor.owner == null) {
+            removeMonitorWait(monitor);
+        }
+    }
+
+    /**
+     * Remove a thread from a monitor's wait queue and schedule it for execution.
+     *
+     * @param monitor the monitor
+     */
+    private static void removeMonitorWait(Monitor monitor) {
+
+       /*
+        * Try and remove a thread from the wait queue.
+        */
+        VMThread waiter = monitor.removeMonitorWait();
+        if (waiter != null /*&& waiter.isAlive()*/) {       // Is this right?
+            Assert.that(waiter.isAlive());
+
+            /*
+             * Set the monitor's ownership and nesting depth.
+             */
+            monitor.owner = waiter;
+            monitor.depth = waiter.monitorDepth;
+            Assert.that(waiter.monitorDepth > 0);
+
+            /*
+             * Restart execution of the thread.
+             */
+            addToRunnableThreadsQueue(waiter);
+
+        } else {
+
+            /*
+             * No thread is waiting for this monitor, so mark it as unused.
+             */
+            monitor.owner = null;
+            monitor.depth = 0;
+        }
+    }
+
+    /**
+     * Create real monitors for objects with pending monitors.
+     */
+    static void fixupPendingMonitors() {
+        Assert.that(currentThread != null);
+        Object object = VM.removeVirtualMonitorObject();
+        while (object != null) {
+            Monitor monitor = GC.getMonitor(object);
+            if (monitor.owner == null) {
+//VM.print("thread-");
+//VM.print(currentThread.threadNumber);
+//VM.print(" locked ");
+//VM.printAddress(object);
+//VM.println();
+                Assert.that(monitor.depth == 0);
+                monitor.depth = 1;
+                monitor.owner = currentThread;
+            } else {
+//VM.print("thread-");
+//VM.print(currentThread.threadNumber);
+//VM.print(" re-locked ");
+//VM.printAddress(object);
+//VM.println();
+                Assert.that(monitor.owner == currentThread);
+                Assert.that(monitor.depth > 0);
+
+                if (monitor.depth == MAXDEPTH) {
+                    throw VM.getOutOfMemoryError();
+                }
+                monitor.depth++;
+            }
+            object = VM.removeVirtualMonitorObject();
+        }
+    }
+
+    /**
+     * Gets a monitor.
+     *
+     * @param object the object to be synchronized upon
+     */
+    static Monitor getMonitor(Object object) {
+        fixupPendingMonitors();  // Convert any pending monitors to real ones
+        return GC.getMonitor(object);
+    }
+
+    /**
+     * Enters a monitor.
+     *
+     * @param object the object to be synchronized upon
+     */
+    static void monitorEnter(Object object) {
+        Monitor monitor = getMonitor(object);
+        if (monitor.owner == null) {
+
+//VM.print("thread-");
+//VM.print(currentThread.threadNumber);
+//VM.print(" locked ");
+//VM.printAddress(object);
+//VM.println();
+            /*
+             * Unowned monitor, make the current thread the owner.
+             */
+            monitor.owner = currentThread;
+            monitor.depth = 1;
+
+        } else if (monitor.owner == currentThread) {
+
+//VM.print("thread-");
+//VM.print(currentThread.threadNumber);
+//VM.print(" re-locked ");
+//VM.printAddress(object);
+//VM.println();
+            /*
+             * Thread already owns the monitor, increment depth.
+             */
+            if (monitor.depth == MAXDEPTH) {
+                throw VM.getOutOfMemoryError();
+            }
+            monitor.depth++;
+        } else {
+
+//VM.print("thread-");
+//VM.print(currentThread.threadNumber);
+//VM.print(" waiting for ");
+//VM.printAddress(object);
+//VM.print(" which is currently owned by ");
+//VM.print(monitor.owner.threadNumber);
+//VM.println();
+            /*
+             * Add to the wait queue and set the depth for when thread is restarted.
+             */
+            currentThread.monitorDepth = 1;
+            addMonitorWait(monitor, currentThread);
+            reschedule();
+
+//VM.print("thread-");
+//VM.print(currentThread.threadNumber);
+//VM.print(" locked ");
+//VM.printAddress(object);
+//VM.println();
+            /*
+             * Safety.
+             */
+            Assert.that(currentThread.isolate.isExited() || monitor.owner == currentThread);
+            currentThread.monitor = null;
+            currentThread.monitorDepth = 0;
+        }
+    }
+
+    /**
+     * Exit a monitor.
+     *
+     * @param object the object to be unsynchronized
+     */
+    static void monitorExit(Object object) {
+        Monitor monitor = getMonitor(object);
+
+        /*
+         * Throw an exception if things look bad
+         */
+        if (monitor.owner != currentThread) {
+            throwIllegalMonitorStateException(monitor.owner);
+        }
+
+        /*
+         * Safety.
+         */
+        Assert.that(monitor.depth > 0);
+
+//VM.print("thread-");
+//VM.print(currentThread.threadNumber);
+//VM.print(" released ");
+//VM.printAddress(object);
+//VM.println();
+        /*
+         * Try and restart a thread if the nesting depth is zero
+         */
+        if (--monitor.depth == 0) {
+            removeMonitorWait(monitor);
+        }
+
+        /*
+         * Check that the monitor's depth is zero if it is not in use.
+         */
+        Assert.that(monitor.owner != null || monitor.condvarQueue != null || monitor.monitorQueue != null || monitor.depth == 0);
+/*if[SMARTMONITORS]*/
+        /*
+         * Remove the monitor if it was not used for a wait() operation.
+         */
+        if (monitor.owner == null && monitor.condvarQueue == null && monitor.monitorQueue == null) {
+            Assert.that(monitor.depth == 0);
+            GC.removeMonitor(object, !monitor.hasHadWaiter);
+        }
+/*end[SMARTMONITORS]*/
+    }
+
+    /**
+     * Checks whether this thread's <i>interrupted status</i> has been set and if so,
+     * clears it and then throws an InteruptedException.
+     *
+     * @throws InterruptedException if this thread's <i>interrupted status</i> is set
+     */
+    private void handlePendingInterrupt() throws InterruptedException {
+        if (pendingInterrupt) {
+            pendingInterrupt = false;
+            throw new InterruptedException();
+        }
+    }
+
+    /**
+     * Wait for an object to be notified.
+     *
+     * @param object the object to wait on
+     * @param delta the timeout period
+     *
+     * @exception  InterruptedException if another thread has interrupted
+     *             the current thread.  The <i>interrupted status</i> of the
+     *             current thread is cleared when this exception is thrown.
+     */
+    public static void monitorWait(Object object, long delta) throws InterruptedException {
+        Monitor monitor = getMonitor(object);
+
+        // Throw an exception if things look bad
+        if (monitor.owner != currentThread) {
+            throwIllegalMonitorStateException(monitor.owner);
+        }
+
+        // Was the thread interrupted?
+        currentThread.handlePendingInterrupt();
+
+/*if[SMARTMONITORS]*/
+        // Record that the monitor was waited upon.
+        monitor.hasHadWaiter = true;
+/*end[SMARTMONITORS]*/
+
+        // Add to timer queue if time is > 0
+        if (delta > 0) {
+            timerQueue.add(currentThread, delta);
+        }
+
+        // Save the nesting depth so it can be restored when it regains the monitor.
+        currentThread.monitorDepth = monitor.depth;
+
+        // Add to the wait queue
+        monitor.addCondvarWait(currentThread);
+
+        // Having relinquished the monitor, get the next thread off its wait queue.
+        removeMonitorWait(monitor);
+
+//VM.print("thread-");
+//VM.print(currentThread.threadNumber);
+//VM.print(" released ");
+//VM.printAddress(object);
+//VM.println();
+        // Wait for a notify or a timeout.
+        Assert.that(monitor.condvarQueue != null);
+        Assert.that(currentThread.monitor == monitor);
+        reschedule();
+
+//VM.print("thread-");
+//VM.print(currentThread.threadNumber);
+//VM.print(" locked ");
+//VM.printAddress(object);
+//VM.println();
+
+        // Was the thread interrupted?
+        currentThread.handlePendingInterrupt();
+
+        // Safety...
+        Assert.that(monitor.owner == currentThread);
+        currentThread.monitor = null;
+        currentThread.monitorDepth = 0;
+    }
+
+    /**
+     * Notify an object.
+     *
+     * @param object the object be notified
+     * @param notifyAll flag to notify all waiting threads
+     */
+    public static void monitorNotify(Object object, boolean notifyAll) {
+
+/*if[SMARTMONITORS]*/
+        /*
+         * If the object is on the pending monitor queue there cannot be another thread to notify.
+         */
+        if (VM.hasVirtualMonitorObject(object)) {
+            Assert.that(!GC.hasRealMonitor(object));
+            return;
+        }
+/*end[SMARTMONITORS]*/
+
+        /*
+         * Signal any waiting threads.
+         */
+        Monitor monitor = getMonitor(object);
+        boolean success = false;
+
+        /*
+         * Throw an exception if the object is not owned by the current thread.
+         */
+        if (monitor.owner != currentThread) {
+            throwIllegalMonitorStateException(monitor.owner);
+        }
+
+        /*
+         * Try and restart a thread.
+         */
+        do {
+            /*
+             * Get the next waiting thread.
+             */
+            VMThread waiter = monitor.removeCondvarWait();
+            if (waiter == null) {
+                break;
+            }
+
+            /*
+             * Note that a thread was found.
+             */
+            success = true;
+
+            /*
+             * Remove timeout if there was one and restart
+             */
+            timerQueue.remove(waiter);
+            addMonitorWait(monitor, waiter);
+
+        /*
+         * Loop if it this is a notifyAll operation.
+         */
+        } while (notifyAll);
+
+        /*
+         * If the notify released something then yield.
+         */
+        if (success) {
+            addToRunnableThreadsQueue(null);
+            reschedule();
+        }
+    }
+
+    /**
+     * Test the thread to see if it is in a queue.
+     */
+    final boolean inQueue(byte name) {
+        return inqueue == name;
+    }
+
+    /**
+     * Declare the thread to be in a queue.
+     */
+    final void setInQueue(byte name) {
+//VM.print(this.name);
+//VM.print("::setInQueue: inqueue=");
+//VM.print(inqueue);
+//VM.print(" name=");
+//VM.println(name);
+        Assert.always(inqueue == 0);
+
+        // **** NEVER try to signle step with the debugger past the next statement ****
+        inqueue = name;
+    }
+
+    /**
+     * Declare the thread to be not in a queue.
+     */
+    final void setNotInQueue(byte name) {
+//VM.print(this.name);
+//VM.print("::setNotInQueue: inqueue=");
+//VM.print(inqueue);
+//VM.print(" name=");
+//VM.println(name);
+        Assert.always(inqueue == name);
+
+        // **** NEVER try to signle step with the debugger past the next statement ****
+        inqueue = 0;
+    }
+
+    /**
+     * Interrupts this thread.
+     * <p>
+     * This method does nothing if the current thread is interrupting itself.
+     * <p>
+     * If this thread is blocked in an invocation of the {@link Object#wait()},
+     * {@link Object#wait(long)}, or {@link Object#wait(long, int)} methods of the
+     * class, or of the {@link Thread#join()}, {@link Thread#join(long)},
+     * {@link Thread#join(long, int)}, {@link Thread#sleep(long)}, or
+     * {@link Thread#sleep(long, int)} methods of this class, then its interrupt
+     * status will be cleared and it will receive an {@link InterruptedException}.
+     * <p>
+     * If none of the previous conditions hold then this thread's interrupt status will be set.
+     */
+    public void interrupt() {
+        if (state == ALIVE && currentThread != this) {
+//VM.print("Thread::interrupt - bcount = ");
+//VM.println(VM.branchCount());
+
+            // Interrupt a join
+            if (waitingToJoin != null) {
+
+                // Remove this thread from the list of joiners
+                if (waitingToJoin.joiners == this) {
+                    waitingToJoin.joiners = this.nextThread;
+                } else {
+                    VMThread prev = waitingToJoin.joiners;
+                    while (prev.nextThread != this) {
+                        prev = prev.nextThread;
+                        Assert.that(prev != null);
+                    }
+                    prev.nextThread = this.nextThread;
+                }
+
+                // Move this thread to the runnable thread queue
+                waitingToJoin = null;
+                this.setNotInQueue(Q_JOIN);
+                addToRunnableThreadsQueue(this);
+            }
+
+            // If the thread is waiting on a monitor then remove it
+            // from the conditional variable wait queue.
+            Monitor monitor = this.monitor;
+            if (monitor != null) {
+
+                // May also be on a timer queue
+                timerQueue.remove(this);
+
+                monitor.removeCondvarWait(this);
+
+                // Reclaim the lock on the monitor. If this is available
+                // then the thread will be added to the run queue.
+                addMonitorWait(monitor, this);
+            } else {
+                if (inQueue(Q_TIMER)) {
+                    timerQueue.remove(this);
+                    this.setNotInQueue(Q_TIMER);
+                    addToRunnableThreadsQueue(this);
+                }
+            }
+            pendingInterrupt = true;
+        }
+    }
+
+}
+
+/*=======================================================================*\
+ *                                Breakpoint                             *
+\*=======================================================================*/
+
+/**
+ * A <code>HitBreakpoint</code> instance represents a breakpoint that has been hit
+ * in a given thread. This object is used to report the breakpoint event to an
+ * attached debugger and then resume execution. This object is also used to
+ * report exception events (which are special type of breakpoint).
+ * <p>
+ * All the frame offsets in this class are relative to the top of the stack
+ * (i.e. where the first call on the stack is found). This is because
+ * offsets relative to the bottom of the stack will be invalidated should
+ * the stack be extended.
+ *
+ * @author Doug Simon
+ */
+final class HitBreakpoint {
+
+    /**
+     * Value denoting that a non-exception breakpoint has been hit.
+     */
+    public final static int BP_HIT = 1;
+
+    /**
+     * Value denoting that breakpoint has been handled, thread has been resumed
+     * but instruction at breakpoint has not yet been executed.
+     */
+    public final static int BP_REPORTED = 2;
+
+    /**
+     * Value denoting that an exception an exception was raised/thrown on a thread.
+     */
+    public final static int EXC_HIT = 3;
+
+    /**
+     * Value denoting that an exception is being reported to a debug client.
+     */
+    public final static int EXC_REPORTING = 4;
+
+    /**
+     * Value denoting that an exception has been reported and execution should
+     * continue in the corresponding exception handler.
+     */
+    public final static int EXC_REPORTED = 5;
+
+    /**
+     * The thread in which the breakpoint was hit.
+     */
+    final VMThread thread;
+
+    /**
+     * Breakpoint reporting state.
+     */
+    private int state;
+
+    /**
+     * The offset (in bytes) from the top of the stack to the frame that threw the exception
+     * or hit the breakpoint being reported.
+     */
+    final Offset hitOrThrowFO;
+
+    /**
+     * The bytecode index of the execution point within the method that threw the exception
+     * or hit the breakpoint being reported.
+     */
+    final Offset hitOrThrowBCI;
+
+    /**
+     * The offset (in bytes) from the top of the stack to the frame of the handler that will catch
+     * the exception.
+     */
+    final Offset catchFO;
+
+    /**
+     * The bytecode index of the catch handler.
+     */
+    final Offset catchBCI;
+
+    /**
+     * The exception to be reported to debugger, or null.
+     */
+    final Throwable exception;
+
+    /**
+     * Creates a HitBreakpoint for reporting a non-exception breakpoint.
+     *
+     * @param thread   the thread in which the breakpoint was hit
+     * @param hitFO    the offset (in bytes) of the frame in which the breakpoint was hit
+     * @param hitBCI    the bytecode index of the instruction at which the breakpoint was hit
+     */
+    HitBreakpoint(VMThread thread, Offset hitFO, Offset hitBCI) {
+        this.thread = thread;
+        this.exception = null;
+        this.hitOrThrowFO = hitFO;
+        this.hitOrThrowBCI = hitBCI;
+        this.catchFO = Offset.zero();
+        this.catchBCI = Offset.zero();
+        setState(BP_HIT);
+
+        Assert.that(!hitFO.isZero());
+        Assert.that(getMethod() != null);
+    }
+
+    /**
+     * Creates a HitBreakpoint for reporting an exception breakpoint.
+     *
+     * @param thread    the thread in which the breakpoint was hit
+     * @param exception the exception thrown/raised
+     * @param throwFO   the frame in which the exception was thrown
+     * @param throwBCI  the bytecode index of the instruction at which the exception was thrown
+     * @param catchFO   the frame that will catch exception
+     * @param catchBCI  the bytecode index of the exception handler
+     */
+    HitBreakpoint(VMThread thread, Offset throwFO, Offset throwBCI, Throwable exception, Offset catchFO, Offset catchBCI) {
+        this.thread = thread;
+        this.hitOrThrowFO = throwFO;
+        this.hitOrThrowBCI = throwBCI;
+        this.catchFO = catchFO;
+        this.catchBCI = catchBCI;
+        this.exception = exception;
+        setState(EXC_HIT);
+
+        Assert.that(!throwFO.isZero());
+        Assert.that(getMethod() != null);
+        Assert.that(!catchFO.isZero());
+        Assert.that(getCatchMethod() != null);
+    }
+
+    Throwable getException() {
+        return exception;
+    }
+
+    ExecutionPoint getLocation() {
+        return new ExecutionPoint(hitOrThrowFO, hitOrThrowBCI, getMethod());
+    }
+
+    ExecutionPoint getCatchLocation() {
+        return new ExecutionPoint(catchFO, catchBCI, getCatchMethod());
+    }
+
+/*if[DEBUG_CODE_ENABLED]*/
+    void dumpState() {
+        boolean isException = (state != BP_HIT && state != BP_REPORTED);
+        VM.print("   state: ");
+        VM.println(state);
+        VM.print("   thread: ");
+        VM.print(thread.getName());
+        VM.println();
+        VM.print("   thread.appThreadTop: ");
+        VM.printOffset(thread.getAppThreadTop());
+        VM.println();
+        VM.print("   thread.appThreadTop.mp: ");
+        VM.printAddress(VM.getMP(thread.frameOffsetAsPointer(thread.getAppThreadTop())));
+        VM.println();
+        if (isException) {
+            VM.print("   exception: ");
+            VM.printAddress(exception);
+            VM.println();
+            VM.print("   throwFO: ");
+            VM.printOffset(hitOrThrowFO);
+            VM.println();
+            VM.print("   throwMP: ");
+            VM.printAddress(getMethod());
+            VM.println();
+            VM.print("   throwBCI: ");
+            VM.printOffset(hitOrThrowBCI);
+            VM.println();
+            VM.print("   catchFO: ");
+            VM.printOffset(catchFO);
+            VM.println();
+            VM.print("   catchBCI: ");
+            VM.printOffset(catchBCI);
+            VM.println();
+            VM.print("   catchMP: ");
+            VM.printAddress(getCatchMethod());
+            VM.println();
+            VM.print("   isCaught: ");
+            VM.print(isCaught());
+            VM.println();
+        } else {
+            VM.print("   hitFO: ");
+            VM.printOffset(hitOrThrowFO);
+            VM.println();
+            VM.print("   hitMP: ");
+            VM.printAddress(getMethod());
+            VM.println();
+            VM.print("   hitBCI: ");
+            VM.printOffset(hitOrThrowBCI);
+            VM.println();
+        }
+    }
+/*end[DEBUG_CODE_ENABLED]*/
+
+    /**
+     * @return the state value
+     */
+    final int getState() {
+        return state;
+    }
+
+    /**
+     * Sets the debugger state to a given value.
+     *
+     * @param value  the new value
+     */
+    final void setState(int value) {
+        Assert.that(value >= BP_HIT && value <= EXC_REPORTED);
+        state = value;
+    }
+
+    /**
+     * @return the method that threw the exception or hit the breakpoint being reported
+     */
+    Object getMethod() {
+        return VM.getMP(thread.frameOffsetAsPointer(hitOrThrowFO));
+    }
+
+    /**
+     * Return the method that will catch the exception.
+     *
+     * @return method object or null
+     */
+    Object getCatchMethod() {
+        return catchFO.isZero() ? null : VM.getMP(thread.frameOffsetAsPointer(catchFO));
+    }
+
+    /**
+     * Determines if the thrown exception is caught within an application frame.
+     * There is always a top level handler for all exceptions in a system frame.
+     *
+     * @return if the handler for the exception is within an application
+     */
+    boolean isCaught() {
+        Assert.that(!catchFO.isZero());
+        Offset appThreadTop = thread.getAppThreadTop();
+        return appThreadTop.isZero() || appThreadTop.lt(catchFO);
+    }
+}
+
+/*=======================================================================*\
+ *                                Monitor                                *
+\*=======================================================================*/
+
+final class Monitor {
+
+    /**
+     * The thread that owns the monitor.
+     */
+    VMThread owner;
+
+    /**
+     * Queue of threads waiting to claim the monitor.
+     */
+    VMThread monitorQueue;
+
+    /**
+     * Queue of threads waiting to claim the object.
+     */
+    VMThread condvarQueue;
+
+/*if[SMARTMONITORS]*/
+    /**
+     * Nesting depth.
+     */
+    short depth;
+
+    /**
+     * Flag to show if a wait occured.
+     */
+    boolean hasHadWaiter;
+/*else[SMARTMONITORS]*/
+//  int depth;
+/*end[SMARTMONITORS]*/
+
+    /*
+     * Constructor
+     */
+    Monitor() {
+    }
+
+    /**
+     * Add a thread to the monitor wait queue.
+     *
+     * @param thread the thread to add
+     */
+    void addMonitorWait(VMThread thread) {
+        thread.setInQueue(VMThread.Q_MONITOR);
+        Assert.that(thread.nextThread == null);
+        VMThread next = monitorQueue;
+        if (next == null) {
+            monitorQueue = thread;
+        } else {
+            while (next.nextThread != null) {
+                next = next.nextThread;
+            }
+            next.nextThread = thread;
+        }
+    }
+
+    /**
+     * Remove a thread from the monitor wait queue.
+     *
+     * @return a thread or null if there is none
+     */
+    VMThread removeMonitorWait() {
+        VMThread thread = monitorQueue;
+        if (thread != null) {
+            monitorQueue = thread.nextThread;
+            thread.setNotInQueue(VMThread.Q_MONITOR);
+            thread.nextThread = null;
+        }
+        return thread;
+    }
+
+    /**
+     * Add a thread to the conditional variable wait queue.
+     *
+     * @param thread the thread to add
+     */
+    void addCondvarWait(VMThread thread) {
+        thread.setInQueue(VMThread.Q_CONDVAR);
+        thread.monitor = this;
+        Assert.that(thread.nextThread == null);
+        VMThread next = condvarQueue;
+        if (next == null) {
+            condvarQueue = thread;
+        } else {
+            while (next.nextThread != null) {
+                next = next.nextThread;
+            }
+            next.nextThread = thread;
+        }
+    }
+
+    /**
+     * Remove the next thread from the conditional variable wait queue.
+     *
+     * @return a thread or null if there is none
+     */
+    VMThread removeCondvarWait() {
+        VMThread thread = condvarQueue;
+        if (thread != null) {
+            condvarQueue = thread.nextThread;
+            thread.setNotInQueue(VMThread.Q_CONDVAR);
+            thread.monitor = null;
+            thread.nextThread = null;
+        }
+        return thread;
+    }
+
+    /**
+     * Remove a specific thread from the conditional variable wait queue.
+     *
+     * @param thread the thread to remove
+     */
+    void removeCondvarWait(VMThread thread) {
+        if (thread.inQueue(VMThread.Q_CONDVAR)) {
+            VMThread next = condvarQueue;
+            Assert.that(next != null);
+            if (next == thread) {
+                condvarQueue = thread.nextThread;
+            } else {
+                while (next.nextThread != thread) {
+                    next = next.nextThread;
+                    Assert.that(next != null);
+                }
+                if (next.nextThread == thread) {
+                    next.nextThread = thread.nextThread;
+                }
+            }
+            thread.setNotInQueue(VMThread.Q_CONDVAR);
+            thread.monitor = null;
+            thread.nextThread = null;
+        }
+    }
+}
+
+
+/*=======================================================================*\
+ *                              ThreadQueue                              *
+\*=======================================================================*/
+
+final class ThreadQueue {
+
+    /**
+     * The first thread in the queue.
+     */
+    VMThread first;
+
+    /**
+     * The count of threads in the queue.
+     */
+    int count;
+
+    /**
+     * Add a thread to the queue.
+     *
+     * @param thread the thread to add
+     */
+    void add(VMThread thread) {
+        Assert.that(thread.isAlive());
+        thread.setInQueue(VMThread.Q_RUN);
+        count++;
+        if (first == null) {
+            first = thread;
+        } else {
+            if (first.priority < thread.priority) {
+                thread.nextThread = first;
+                first = thread;
+            } else {
+                VMThread last = first;
+                while (last.nextThread != null && last.nextThread.priority >= thread.priority) {
+                    last = last.nextThread;
+                }
+                thread.nextThread = last.nextThread;
+                last.nextThread = thread;
+            }
+        }
+    }
+
+    /**
+     * Get the number of elements in the queue.
+     *
+     * @return the count
+     */
+    int size() {
+        return count;
+    }
+
+    /**
+     * Get the next thread in the queue.
+     *
+     * Note that threads suspended by the debugger may be in (or added to) the runnable
+     * queue at any time, but they will be skipped over for scheduling purposes.
+     * This makes it simple for suspended threads to be notified of events, or come off of
+     * timers the normal way.
+     *
+     * @return a thread or null if there is none
+     */
+    VMThread next() {
+        VMThread thread = first;
+        VMThread skipped = null;
+
+        // Skip over threads suspended by the debugger
+        while (thread != null && thread.getDebuggerSuspendCount() != 0) {
+            skipped = thread;
+            thread = thread.nextThread;
+        }
+
+        if (thread != null) {
+            thread.setNotInQueue(VMThread.Q_RUN);
+            if (skipped == null) {
+                first = thread.nextThread;
+            } else {
+                skipped.nextThread = thread.nextThread;
+            }
+            thread.nextThread = null;
+            count--;
+        }
+        return thread;
+    }
+
+    /**
+     * Remove all the threads in this queue that are owned by <code>isolate</code>
+     * and add them to the queue of hibernated runnable threads in the isolate.
+     *
+     * @param isolate  the isolate whose runnable threads are to be removed
+     */
+    void prune(Isolate isolate) {
+        VMThread oldQueue = first;
+        count = 0;
+        first = null;
+        while(oldQueue != null) {
+            VMThread thread = oldQueue;
+            oldQueue = oldQueue.nextThread;
+            thread.nextThread = null;
+            thread.setNotInQueue(VMThread.Q_RUN);
+            if (thread.getIsolate() != isolate) {
+                add(thread);
+            } else {
+                thread.setInQueue(VMThread.Q_HIBERNATEDRUN);
+                isolate.addToHibernatedRunThread(thread);
+            }
+        }
+    }
+}
+
+
+/*=======================================================================*\
+ *                               TimerQueue                              *
+\*=======================================================================*/
+
+final class TimerQueue {
+
+    /**
+     * The first thread in the queue.
+     */
+    VMThread first;
+
+    /**
+     * Add a thread to the queue.
+     *
+     * @param thread the thread to add
+     * @param delta the time period
+     */
+    void add(VMThread thread, long delta) {
+        Assert.that(thread.nextTimerThread == null);
+        thread.time = System.currentTimeMillis() + delta;
+        if (thread.time < 0) {
+
+           /*
+            * If delta is so huge that the time went negative then just make
+            * it a very large value. The universe will end before the error
+            * can be detected.
+            */
+            thread.time = Long.MAX_VALUE;
+        }
+        if (first == null) {
+            first = thread;
+        } else {
+            if (first.time > thread.time) {
+                thread.nextTimerThread = first;
+                first = thread;
+            } else {
+                VMThread last = first;
+                while (last.nextTimerThread != null && last.nextTimerThread.time < thread.time) {
+                    last = last.nextTimerThread;
+                }
+                thread.nextTimerThread = last.nextTimerThread;
+                last.nextTimerThread = thread;
+            }
+        }
+    }
+
+    /**
+     * Get the next thread in the queue that has reached its time.
+     *
+     * @return a thread or null if there is none
+     */
+    VMThread next() {
+        VMThread thread = first;
+        if (thread == null || thread.time > System.currentTimeMillis()) {
+            return null;
+        }
+        first = first.nextTimerThread;
+        thread.nextTimerThread = null;
+        Assert.that(thread.time != 0);
+        thread.time = 0;
+        return thread;
+    }
+
+    /**
+     * Remove a specific thread from the queue.
+     *
+     * @param thread the thread
+     */
+    void remove(VMThread thread) {
+        if (first == null) {
+            Assert.that(thread.time == 0);
+            return;
+        }
+        if (thread.time == 0) {
+            return;
+        }
+        thread.time = 0;
+        if (thread == first) {
+            first = thread.nextTimerThread;
+            thread.nextTimerThread = null;
+            return;
+        }
+        VMThread p = first;
+        while (p.nextTimerThread != null) {
+            if (p.nextTimerThread == thread) {
+                p.nextTimerThread = thread.nextTimerThread;
+                thread.nextTimerThread = null;
+                return;
+            }
+            p = p.nextTimerThread;
+        }
+        VM.fatalVMError();
+    }
+
+    /**
+     * Get the time delta to the next event in the queue.
+     *
+     * @return the time
+     */
+    long nextDelta() {
+        if (first != null) {
+            long now = System.currentTimeMillis();
+            if (now >= first.time) {
+                return 0;
+            }
+            long res = first.time - now;
+            return res;
+        } else {
+            return Long.MAX_VALUE;
+        }
+    }
+
+
+    /**
+     * Remove all the threads in this queue that are owned by <code>isolate</code>
+     * and add them to the queue of hibernated timer-blocked threads in the isolate.
+     *
+     * @param isolate  the isolate whose timer-blocked threads are to be removed
+     */
+    void prune(Isolate isolate) {
+        start:
+        while (true) {
+            VMThread t = first;
+            while (t != null) {
+                if (t.getIsolate() == isolate) {
+                    long time = t.time - System.currentTimeMillis();
+                    remove(t);
+                    t.time = time;
+                    isolate.addToHibernatedTimerThread(t);
+                    continue start;
+                }
+                t = t.nextTimerThread;
+            }
+            break;
+        }
+    }
+
+}
+
+/**
+ * Extension of IntHashtable that enables the pruning the threads of hibernated isolates.
+ */
+class EventHashtable extends IntHashtable implements IntHashtableVisitor {
+
+    /**
+     * The isolate being pruned.
+     */
+    private transient Isolate isolate;
+
+    /**
+     * Prune the isolates out of the event hash table.
+     *
+     * @param isolate the isolate remove
+     */
+    void prune(Isolate isolate) {
+        this.isolate = isolate;
+        visit(this);
+        this.isolate = null;
+    }
+
+    /**
+     * Visit method for EventHashtable visitor.
+     *
+     * @param key the key
+     * @param value the value
+     */
+    public void visitIntHashtable(int key, Object value) {
+        VMThread t = (VMThread)value;
+        if (t.getIsolate() == isolate) {
+            VMThread t2 = VMThread.findEvent(key);
+            Assert.that(t == t2);
+            Assert.that(t.nextThread == null);
+            t.setInQueue(VMThread.Q_HIBERNATEDRUN);
+            isolate.addToHibernatedRunThread(t);
+        }
+    }
+}

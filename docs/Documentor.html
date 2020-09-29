@@ -1,0 +1,449 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Documentor Command</title>
+<style type="text/css">
+        table.console {
+            border: solid 1px;
+            padding: 5px;
+            width: 100%;
+            background-color: #CCCCCC;
+        }
+.h2 {
+	padding: 0px;
+	margin: 0px;
+}
+
+.banner-space {
+	float: left; 
+	height: 43px;
+	width: 1%;  
+}
+
+
+#banner-yellow {
+	float: left; 
+	width: 60%; 
+	height: 43px;
+	background-color: #fbe249;
+}
+
+#banner-red {
+	float: left; 
+	width: 19%; 
+	height: 43px;
+	background-color: #d12124;
+}
+
+#banner-purple {
+	float: left; 
+	width: 19%; 
+	height: 43px;
+	background-color: #594fbf;
+	background-image: url('logo_sun.gif');
+	background-repeat: no-repeat;	
+}
+
+
+
+.child {
+	padding-left:   30px;
+}
+
+
+.dirWithIndex  {
+	font-style: italic;
+	font-weight: bold;	
+	text-transform: capitalize;
+}
+
+.dirWithoutIndex {
+	font-weight: bold;
+	text-transform: capitalize;
+}
+
+
+.description {
+	padding-left:   30px;
+	display: none;
+	font-style: italic;
+	color: #d12124;
+}
+
+.minus {
+	font-style: normal;
+	display: none;
+	font-family:  Courier New;
+	
+}
+
+.minus a {
+	text-decoration: none;
+	color: #d12124;
+}
+
+
+.plus {
+	font-style: normal;
+	font-family:  Courier New;
+}
+
+.plus a {
+	text-decoration: none;
+	color: #d12124;
+}
+
+.showHideAll a {
+	text-decoration: none;
+	color: #d12124;
+}
+
+a {text-decoration:none}
+a:visited {color:#96C}
+a:link {color:#594FBF}
+a:hover {text-decoration:underline}
+        
+    </style>
+    <script>
+        // hide all nodes below this parent
+    function hide(parent) {
+	var plus = document.getElementById(parent + "_plus");
+	var minus = document.getElementById(parent + "_minus");
+	var desc = document.getElementById(parent + "_desc");
+
+	if(plus == null) {
+	    updateTableList(parent, false);	
+	    return;
+	}
+				
+	plus.style.display="";
+	minus.style.display = "none";
+	desc.style.display = "none";
+	updateTableList(parent, false);			
+    }
+
+    // show all nodes below this parent
+    function show(parent) {
+	var plus = document.getElementById(parent + "_plus");
+	var minus = document.getElementById(parent + "_minus");
+	var desc = document.getElementById(parent + "_desc");
+	
+	if(minus == null) {
+	    updateTableList(parent, false);	
+	    return;
+	}
+				
+	plus.style.display="none";
+	minus.style.display = "inline";
+	desc.style.display = "block";
+	updateTableList(parent, true);
+    }
+			
+
+    // hide all nodes
+    function hideAll(nodes) {
+
+	for(i = 1; i <= nodes; i++)
+		hide(i);
+    }
+
+
+    // show all nodes
+    function showAll(nodes) {
+
+	for(i = 1; i <= nodes; i++)
+		show(i);
+    }
+
+
+			
+    // Create a cookie with the specified name and value.
+    function setCookie(sName, sValue) {
+	date = new Date();
+	
+	// Expire in a year
+	date.setTime(date.getTime()+(365*24*60*60*1000));
+	var expireTime = date.toGMTString();
+	document.cookie = sName + "=" + escape(sValue) + "; expires=" + expireTime;
+    }
+			
+    // Get value of cookie of given name
+    function getCookie(sName) {
+			 		 
+	// cookies are separated by semicolons
+	var aCookie = document.cookie.split("; ");
+	for (var i=0; i < aCookie.length; i++) {
+	    // a name/value pair (a crumb) is separated by an equal sign
+	    var aCrumb = aCookie[i].split("=");
+	    if (sName == aCrumb[0]) 
+		return unescape(aCrumb[1]);
+	}
+    
+	// a cookie with the requested name does not exist
+	return null;
+    }			
+			
+    // Update list of entries to expand when page is loaded		
+    function updateTableList(parent, opening) {
+	var openList = getCookie('tableState');
+				
+	// If we don't have cookie yet 
+	if(openList == null && opening) {
+	    setCookie('tableState', parent + ",");
+	    return;
+	}
+
+	var entries = openList.split(",");
+				
+
+	//We need to add entry to cookie, but ensure no duplicates
+	var newEntry = '';
+					
+	if(opening) {
+	    newEntry = parent + ',';
+	}
+	
+			    
+	for(var j = 0; j < entries.length; j++) { 
+	    // We already have entry for parent
+	    if(entries[j] == parent) {
+		continue;
+	    }
+						   
+						  
+	    // Remove null entries
+	    if(entries[j] == '') {
+		continue;
+	    }
+						   
+	    newEntry += entries[j] + ",";
+	}
+        
+	// remove trailing ","                        
+	newEntry = newEntry.substr(0, newEntry.lastIndexOf(','));
+
+	// remove leading ","
+	if(newEntry.charAt(0) == ',')
+	    newEntry = newEntry.substr(1);
+
+	// update cookie
+	setCookie('tableState', newEntry);
+    }
+			
+
+    // called when page is loaded to return to previous table state
+    function restoreTableState() {
+			   
+	var openList = getCookie('tableState');
+			   
+	// If no cookie, nothing to do
+	if(openList == null) {
+	    return;
+	}
+				
+
+	// Expand entries
+	var entries = openList.split(",");
+	for(var j = 0; j < entries.length; j++) {
+	    show(entries[j]);
+	}
+    }
+		</script>
+    
+</head>
+
+<body onLoad="restoreTableState();">
+
+<h1>Documentor</h1>
+<p>The Documentor command is used to automatically generate static HTML pages 
+displaying documentation for the Squawk project.&nbsp; The command allows for a&nbsp; customizable set of documents 
+to be displayed along with a description.&nbsp; Furthermore it can be used to 
+generate a zip file of public html pages for easy deployment.</p>
+<ul>
+  <li><a href="#addingDoc">Adding Documentation</a></li>
+  <li><a href="#running">Running the Documentor</a></li>
+  <li><a href="#viewing">Viewing the Documentor output</a></li>
+  <li><a href="#howWorks">How it Works</a>
+  <ul>
+  	<li><a href="#master.properties">master.properties</a></li>
+    <li><a href="#documentor.properties">documentor.properties</a></li>
+  	<li><a href="#metaFiles">.meta files</a></li>
+  </ul></li>
+  <li><a href="#bugs">Bugs/Quirks</a></li>
+</ul>
+
+
+<h2><a name="addingDoc"></a>Adding Documentation</h2>
+<p>This section outlines how to add documentation to the repository such that the Documentor will index it appropriately.</p>
+
+<p>A master index document is generated based on the contents of the &quot;/docs&quot; directory.   Any document type can be added to the directory, however, by default only a limited number of filetypes will be indexed (specified in the <a href="#master.properties">master.properties</a> or <a href="#documentor.properties">documentor.properties</a> files). </p>
+
+<p>Either find or create an appropriate directory for the specific documentation to be added.  If the document is in a special format, attempt to convert the document into a format that is easily viewed via a web browser: html, pdf, jpg etc.  Typically the generic filetype will be indexed, but it is helpful to have the original file.  
+
+<p>Once the document(s) have been committed it is helpful to add a short description to both the documents and any directories created.  This is done via the use of <a href="#metaFiles">.meta files</a> files.  Meta files allow for a HTML description of both files and directories.  Typically the Documentor will print out the file or directory name, but since these can sometimes be ambiguous, the meta files also allow for a HTML "display name" for both of these.
+
+<p>After adding the documentation to the repository, the next time the Documentor is run, the index will include your documentation! </p>
+
+<p>If the directory you added requires non-default options (such as you don't want some files displayed), directory level options are available via the use of the <a href="#documentor.properties">documentor.properties</a> file.  Also note, that if your directory contains an index file (by default index.html) the directory entry in the index will link to this file.  This behaviour again can be overridden via the <a href="#documentor.properties">documentor.properties</a> file.
+
+<h2><a name="viewing"></a>Viewing the Documentor output</h2>
+<p>The output is basically an expanded directory structure with only the files of interest shown.  Next to some entries will be a a "+" indicating that further information (a description) is available.  If the "+" is clicked, the description is shown.  Clicking the "-" will hide the description.   Clicking the "Show All" or "Hide All" will show or hide all the available descriptions respectively.  Each file of interest contains a link to the document.  If a directory contains an index file (set in <a href="#documentor.properties">documentor.properties</a> and index.html by default) the directory name will link to the index file. (Note that the output below refers to a fictitious examples directory, hence and links/pictures are unlikely to work).
+
+
+<div style="border: 1px solid;">
+
+<!--Start of document listing>
+<div id="docTable"><div class="child"><div id="1" class="file"><span id="1_plus" class="plus"><a href="javascript: show(1);">+</a></span><span id="1_minus" class="minus"><a href="javascript: hide(1);">-</a></span>&nbsp;<span class="fileLink"><a href="example/logo_sun.gif">logo_sun.gif</a></span><div id="1_desc" class="description"><img src="example/logo_sun.gif"></div></div><div id="2" class="dir"><span id="2_plus" class="plus"><a href="javascript: show(2);">+</a></span><span id="2_minus" class="minus"><a href="javascript: hide(2);">-</a></span>&nbsp;<span class="dirWithoutIndex">Test Docs Directory with Description</span><div id="2_desc" class="description">
+Since the description can include any HTML it is all fairly free form.
+
+Include a table if you like:
+<table><tr><td><b>Test Name</b></td></td><td><b>Result</b></td></tr>
+<tr><td>test A</td><td>10%</td></tr>
+
+<tr><td>test B</td><td>50%</td></tr>
+<tr><td>test C</td><td>95%</td></tr>
+<tr><td>test D</td><td>75%</td></tr>
+</table>
+
+</div></div><div class="child"><div id="3" class="file"><span class="plus">&nbsp;</span>&nbsp;<span class="fileLink"><a href="example/docs/HowToBuildAndRunSquawk3G.html">HowToBuildAndRunSquawk3G.html</a></span></div><div id="4" class="file"><span id="4_plus" class="plus"><a href="javascript: show(4);">+</a></span><span id="4_minus" class="minus"><a href="javascript: hide(4);">-</a></span>&nbsp;<span class="fileLink"><a href="example/docs/IFIP2005-Squawk.pdf">Squawk: A Java VM for Small (and Larger) Devices</a></span><div id="4_desc" class="description">
+Slides for the IFIP WG 2.4 Meeting, Jan 2005. See <a href="http://www.sun.com">Sun Homepage</a></div></div></div></div><p><span id="4_plus" class="showHideAll"><a href="javascript: showAll('4');">Show All</a>&nbsp;|&nbsp;<a href="javascript: hideAll('4');">Hide All</a></span></div>
+
+<!--End of document listing>
+
+</div>
+
+<h2><a name="running"></a>Running the Documentor</h2>
+
+<p>The Documentor command is included in the Squawk build.jar and is used 
+similar to other builder commands.
+
+<p>
+<table class="console">
+ <tr>
+  <td>
+   <pre><code>
+C:\work\Squawk3G&gt;java -jar build.jar documentor -h
+[running documentor...]
+Usage:  [-javadoc[:api] | clean] documentor [doc-option]
+where doc-option includes
+     -public   generate zip of public html pages
+     -h        print this help message
+
+Typical usage:  java -jar build.jar -javadoc:api documentor
+to generate full documentation listing including public APIs
+
+C:\work\Squawk3G&gt;
+   </code></pre>
+  </td>
+ </tr>
+</table>
+
+
+<p>The <i>-javadoc</i> flags indicates that the Javadoc for each of the targets 
+should be built. The optional <i>:api</i> directive indicates that none of the 
+private members should be included in the Javadoc.</p>
+
+<p>The <i>-public</i> flag indicates that a zip should be created with 
+documentation for public deployment.&nbsp; The files and folders that are to be 
+included in this zip are specified in the <a href="#master.properties">
+master.properties</a> file.&nbsp; Additionally, the files and folders included 
+follow the same rules as when building the document list (i.e., excludedFiles, 
+defaultFileTypes, etc.) as they appear in the properties files (see
+<a href="#howWorks">How it Works</a>).</p>
+
+<p>The <i>clean</i> flag removes all generated files, including the Javadoc.</p>
+
+<h2><a name="howWorks"></a>How it Works</h2>
+
+<p>The Documentor searches the &quot;/docs&quot; directory for any HTML templates, as specified by a 
+&quot;.template&quot; extension.&nbsp; The Documentor parses these for specific tags
+(i.e., &lt;tagName&gt;).&nbsp; If one is found, the data associated with the tag is generated and the tag 
+replaced with the generated data.&nbsp; The file is then output with the same 
+name, without the &quot;.template&quot; extension.&nbsp; Thus far there are two tags:</p>
+
+<ul>
+  <li><b>&lt;!docList:dir&gt;:</b>&nbsp;&nbsp;&nbsp;&nbsp;Generate a table listing the 
+documentation contained with the &quot;dir&quot; directory.&nbsp; &quot;dir&quot; must be relative 
+to &quot;/docs&quot;.</li>
+  <li><b>&lt;!date&gt;:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</b>Insert the time and date that this page was generated.&nbsp; This is
+    equivalent to 
+Java's &quot;<i>new Date().toString()</i>&quot;.</li>
+</ul>
+<p>The document listing (docList) tag and the zip file generation routine makes 
+use of a number of configuration and meta files to generate the most appropriate 
+output.&nbsp; The various directives give a good indication as to their use and 
+are described below.</p>
+
+<h3><a name="master.properties"></a>master.properties</h3>
+
+<p>The <a href="#master.properties">master.properties</a> file is used to set the 
+default behaviour of the Documentor.&nbsp; The various directives indicate how 
+files and folders are processed by the Documentor.&nbsp; Some apply globally, 
+while others can be overridden on a per-directory basis using the
+<a href="#documentor.properties">documentor.properties</a> file.&nbsp; The
+<a href="#master.properties">master.properties</a> and
+<a href="#documentor.properties">documentor.properties</a> files must meet the 
+format requirements of Java properties files.</p>
+
+<p>The specific directives are listed below:</p>
+<ul>
+  <li><b>publicWebDirectories:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </b>The files and 
+  directories to be included in the public zip file</li>
+  <li><b>publicWebZipfile:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </b>The filename of the public zip file</li>
+</ul>
+
+<ul>
+  <li><b>defaultFileTypes:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </b>The extension of the files that are considered documents (&quot;;&quot; separated 
+  list)</li>
+  <li><b>defaultImageTypes:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </b>The extension of the files that are considered images (&quot;;&quot; separated list)</li>
+  <li><b>indexFile:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </b>If a directory contains a file by this name, the directory name will 
+  include a html link to this file (ie. index.html)</li>
+  <li><b>recurseIntoSubFolders:&nbsp;&nbsp;&nbsp;&nbsp; </b>True/False.&nbsp; If 
+  true, the subdirectories of this folder will be search for documents</li>
+  <li><b>excludeFiles&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </b>A list of files in the current directory that should be excluded by the
+    Documentor (&quot;;&quot; separated list)</li>
+</ul>
+
+<h3><a name="documentor.properties"></a>documentor.properties</h3>
+<p>The <a href="#documentor.properties">documentor.properties</a> file overrides 
+the following directives specified in the <a href="#master.properties">
+master.properties</a> file on a per-directory basis:</p>
+<ul>
+  <li>defaultFileTypes</li>
+  <li>defaultImageTypes</li>
+  <li>indexFile</li>
+  <li>recurseIntoSubFolders</li>
+  <li>excludeFiles</li>
+</ul>
+<h3><a name="metaFiles"></a>.meta files</h3>
+<p>Meta files are used to provide a description of files or folders when 
+included in the document listing.&nbsp; The meta file for a folder is a file 
+named &quot;.meta&quot; in that folder while the meta file for a standard document is the 
+name of the document with a &quot;.meta&quot; extension (i.e., the meta file for &quot;index.html&quot; 
+is &quot;index.html.meta&quot;).</p>
+
+<p>The meta file includes a HTML description and 
+optionally a &quot;display name&quot;.&nbsp; When listing the documents, typically the 
+filename is used.&nbsp; If the meta file includes, in the first line &quot;displayName 
+= &lt;entry&gt;&quot;, the filename is replaced with the string specified in &quot;&lt;entry&gt;&quot;.</p>
+
+<p>Images are special in that their description also includes the image itself in the generated index.  If a meta file is present then that description will precede the image in the description.  Filetypes which are considered images are customizable on a per directory level, so if this behaviour is not desired for a particular directory, it can be changed via use of the "defaultImageTypes" in either <a href="#master.properties">master.properties</a> or <a href="#documentor.properties">documentor.properties</a>.</p>
+
+<h2><a name="bugs"></a>Bugs/Quirks</h2>
+
+<ul>
+  <li>Template files can only reside in the &quot;/docs&quot; directory as the the directory 
+  tree is not recursively searched.</li>
+  <li>When building the full Javadoc (i.e. with -javadoc not -javadoc:api) on Windows, this process will fail when building the j2se target.  Workaround is to use -javadoc:api flag instead or to building javadoc manually before the running the Documentor.</li>
+</ul>
+
+</body>
+
+</html>

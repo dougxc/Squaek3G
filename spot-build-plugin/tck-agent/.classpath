@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/javatest-agent"/>
+	<classpathentry kind="var" path="SPOT_SDK/lib/spotlib_rt.jar"/>
+	<classpathentry kind="output" path="eclipse"/>
+</classpath>

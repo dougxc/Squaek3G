@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head><!--
+  Copyright (c) 2005 Sun Microsystems, Inc. All Rights Reserved.
+--></head>
+
+<body bgcolor="white">Implementation of an ARM machine code assembler used by the compiler for the Squawk Java virtual 
+machine. 
+<p>
+The ARM assembler implementation is accessed through the <code>Assembler</code> class. The assembler
+has methods representing most the ARM instruction set mnemonics and emits machine code. A number of 
+support classes are used by the assembler:
+<ul>
+    <li>General purpose registers are abstracted by the <code>Register</code> class and the 
+        <code>RegRange</code> class is used to specify individual or a sequential range of registers. 
+    <li><code>Operand2</code> represents the flexible second operands for data processing and logic 
+        instructions.
+    <li><code>Address2</code> represents memory addresses for load and store word or unsigned byte 
+        instructions.        
+    <li><code>Address3</code> represents memory addresses for load and store (signed or unsigned)
+        halfword, load signed byte, or load and store doubleword instructions.
+	<li><code>Address4</code> represents memory addresses for load and store multiple instructions.
+</ul>
+
+    
+<h2>Related Documentation</h2>
+
+For documentation on the ARM architecture and instruction set, please see: 
+<ul>
+<li><a href="../../../../../../../../doc/ARMInstructionSetQuickReference.pdf">ARM Architecture Instruction Set Quick Reference</a> - 
+    brief summary of the ARM instruction mnemonics and addressing modes, useful as a quick reference during development.
+<li><a href="../../../../../../../../doc/ARMDemonRDPProtocol.pdf">ARM Demon RDP Protocol</a> - documents the
+    Remote Debug Protocol used by the Demon debug monitor running on ARM boards to communicate between host 
+    debuggers and the remote debug target hardware. Some of the SWI functions are used by the test code
+    to provide output capabilities. In particular, refer to section 4.3, page 11.
+<li><a href="../../../../../../../../doc/ARMProcedureCallStandard.pdf">ARM Procedure Call Standard</a> -
+    recommended procedure call standard for the ARM platform. Refer to section 5.3 (page 15), 5.4 (16)
+    and 5.5 (16) for subroutine calls, returning results and parameter passing.
+<li>ARM Architecture Reference Manual (Second Edition), David Seal - detailed reference on the ARM architecture
+    including bit patterns for all of the ARM instructions.
+</ul></body>
+</html>

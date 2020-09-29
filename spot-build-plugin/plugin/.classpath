@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/builder"/>
+	<classpathentry kind="var" path="SPOT_SDK/lib/hostagent.jar"/>
+	<classpathentry kind="var" path="SPOT_SDK/lib/junit.jar"/>
+	<classpathentry kind="var" path="SPOT_SDK/lib/RXTXcomm.jar"/>
+	<classpathentry sourcepath="/SPOT_SDK/src/spotlib_source.jar" kind="var" path="SPOT_SDK/lib/spotlib_rt.jar"/>
+	<classpathentry sourcepath="/SPOT_SDK/src/debugclient_source" kind="var" path="SPOT_SDK/lib/debugclient.jar"/>
+	<classpathentry kind="var" path="SPOT_SDK/lib/desktop_signing.jar"/>
+	<classpathentry kind="output" path="eclipse"/>
+</classpath>

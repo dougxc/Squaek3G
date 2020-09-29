@@ -1,0 +1,3 @@
+MIDlet-1: TestMIDlet label,, tests.TestMIDlet
+MIDlet-2: TestMIDlet label,, example.cubes.Cubes
+MIDlet-3: Benchcode label,, squawk.imlet.Startup

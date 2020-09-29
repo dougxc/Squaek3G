@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+</head>
+<body>
+<h1>
+<font size="7" style="font-size: 32pt;"><b>Squawk for Sun(TM) SPOT</b></font>
+</h1>
+<h2>2004-present</h2>
+<p>
+The aim of the Squawk for Sun SPOT project is to deploy the 
+<a href="squawk-rjvm.html">Squawk Java Virtual Machine</a> on the wireless 
+sensor and actuator  
+<a href="http://www.sunspotworld.com">Sun SPOT</a> 
+device developed at Sun Labs.&nbsp; 
+In this version of the Squawk JVM, the VM 
+runs on the bare ARM-9 hardware and provides low-level operating 
+system support, as well as application isolation (isolates). 
+</p>
+<img src="../figures/SunSPOT.jpg">
+<p>
+The original port of Squawk to the ARM simulator was done by John Nolan in
+October 2004.&nbsp; The port to run on the Atmel evaluation board and
+the Sun SPOT device was initially done by John Nolan, John Daniels, and 
+Dave Cleal.
+</p>
+<h2>Table of Contents</h2>
+<ul>
+  <li><a href="#arch">The Squawk Split VM Architecture</a></li>
+  <li><a href="#pubs">Publications</a></li>
+  <li><a href="#team">The Team</a></li>
+  </li>
+</ul>
+<hr>
+<a name="arch">
+<h2>The Squawk Split VM Architecture</h2>
+</a>
+<p>The Squawk for Sun SPOT VM is an interpretive JVM written mainly in 
+the Java language.&nbsp; All of its components; the class loader, the verifier,
+the transformer, the interpreter, the garbage collector, and the thread
+scheduler, are written in the Java language.&nbsp; For performance reasons, the
+interpreter
+is written in the C language, and then compiled
+by an
+optimizing C compiler.&nbsp; The garbage collector used by the Squawk
+VM is automatically translated from Java to C, for performance reasons. 
+</p>
+<p><img border="0" src="../figures/Squawk-SplitVM.jpg" width="642"
+ height="325">
+<a name="arch"></a></p>
+<p><a name="arch">The
+Squawk for Sun SPOT VM uses a split VM architecture in order to save memory 
+on-device. 
+Classes to be deployed onto the
+device are verified and transformed into Squawk's internal object
+representation, which is then saved onto a file called a <b>suite</b>.&nbsp;
+Suites are then loaded into the sensors device and are interpreted by
+the VM on-device.&nbsp; This allows for a smaller VM to be stored in the
+sensor device, as well as faster start-up time for the sensor application (as
+suites are resolved collections of Java classes).</a>
+
+<a name="pubs">
+<h2>Publications</h2>
+</a>
+<ul>
+<li><a href="../docs/vee06-squawk.pdf">Java(TM) on the Bare Metal of 
+	Wireless Sensor Devices -- The Squawk Java Virtual Machine</a>,
+	Doug Simon, Cristina Cifuentes, Dave Cleal, John Daniels and 
+	Derek White, VEE, Ottawa, July 2006</li>
+<li><a href="../docs/7160_spot.pdf">Simplified Development of Wireless 
+	Sensor and Actuator Applications Using Java(TM) Technology</a>,
+        Cristina Cifuentes, Eric Arseneau, Derek White, David Simmons, 
+        Slides for the JavaOne 2006 Hands-on Lab 7160, San Francisco,
+        May 2006 (slides)</li>
+<li><a href="../docs/JavaOne2006-Squawk.pdf">Squawk: A Java(TM) VM for 
+	Wireless Sensor and Actuator Devices</a>, Cristina Cifuentes, 
+	Derek White and Eric Arseneau, JavaOne 2006 Technical Session 1598,
+	San Francisco, May 2006 (slides)</li>
+<li><a href="../docs/oopsla05-squawk.pdf">The Squawk Virtual Machine: 
+	Java(TM) on the Bare Metal</a>, Doug Simon and Cristina Cifuentes, 
+	Extended abstract, OOPSLA, San Diego, October 2005</li>
+<li><a href="../docs/oopsla05-squawk-poster.pdf">The Squawk Java(TM) Virtual
+	Machine: Java on the Bare Metal</a>, Doug Simon and Cristina Cifuentes,
+	OOPSLA Poster, San Diego, October 2005</li>
+<li><a href="../docs/SquawkOnSunSPOT-OH-2005.pdf">Java(TM) on Sensors</a>, 
+	John Nolan and Cristina Cifuentes, Slides for the Sun Labs Open 
+	House, April 2005</li>
+</ul>
+
+<a name="team">
+<h2>The Team</h2>
+<p>Nik Shaylor (alumnus), Doug Simon (alumnus), Bill Bush (alumnus), 
+Cristina Cifuentes, Derek White, Eric Arseneau,
+John Nolan (alumnus), John Daniels, Dave Cleal, Duncan Pierce, 
+Rachel Davies (alumnus), John Wilcox, Ivan Moore.
+</p>
+&nbsp;
+<hr>
+<p>Back to <a href="index.html">the Squawk Project</a></p>
+<hr>
+<p>Contact: <a href="mailto:eric.arseneau@sun.com">Eric Arseneau</a></p>
+</body>
+</html>

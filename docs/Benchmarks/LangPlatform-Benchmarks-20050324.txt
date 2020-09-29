@@ -1,0 +1,70 @@
+x86/Red Hat 8 Linux gcc 3.2, Java 1.5.0, Squawk3G (Feb 2005; compiled with gcc 3.2 and Java 1.5.0)
+x86/Pentium 4 M (20 stage processor pipeline)
+Benchmark             Average Time(ms)                      Magnitude Difference 
+                     C        C++   Java 1.4.2   Squawk3G        C to Squawk 
+gibbons              6.9       6.3      80.3      106.6            15.45
+gibbons_final                           78.1      105.9  
+gibbons_no_switch    5.3       5.3      97.5      122.1            23.04
+deutsch_no_acc                 7.6     125.9      164.5
+deutsch_acc_virtua            21.9     230.3      298.5
+deutsch_acc_final             16.0     231.1      300.9
+deutsch_acc_interface                  241.6      605.9
+                                                                                                                                      
+x86 P4/Windows XP Pro gcc 3.3.1, Java 1.4.2, Squawk3G (Feb 2005; compiled with gcc 3.3.1 and Java 1.4.2)
+x86/Pentium 4 M (20 stage processor pipeline)
+Benchmark             Average Time(ms)                       Magnitude Difference 
+                     C        C++   Java 1.4.2     Squawk3G     C to Squawk
+gibbons             6.7       6.2       75.1         97.1          14.49
+gibbons_final                           74.1         96.2
+gibbons_no_switch   5.4       5.3       96.1        114.2          21.15
+deutsch_no_acc                7.8      120.2        161.2
+deutsch_acc_virtual          18.8      224.3        313.5
+deutsch_acc_final            15.6      219.3        313.4
+deutsch_acc_interface                  219.4        568.8
+                                                                                                                                      
+x86/Windows gcc 3.3.1 non optimized (-O0), g++ 3.3.1 (cygwin) non optimized (-O0),
+Java 1.4.2_07 interpreted only (-Xint) and Squawk3G (Feb, 2005; compiled with cl (Microsoft C compiler) and Java 1.4.2_07)
+x86/Pentium M (10-20 stage processor pipeline)
+Benchmark                             Average Time (ms)       Magnitude Difference 
+                      C     C++    Java 1.4.2      Squawk3G     C to Squawk 
+gibbons              4.9    3.44       32.1          52.1           10.63
+gibbons_final                          31.0          52.0
+gibbons_no_switch    5.3    3.5        43.1          59.1           11.15
+deutsch_no_acc              5.27       58.0          87.1
+deutsch_acc_virtual        12.69      106.2         175.3
+deutsch_acc_final           9.59      101.1         177.2
+deutsch_acc_interface                 108.2         309.5
+                                                                                                                                      
+                                                                                                                                      
+ARM7/Atmel Evalutation board arm-elf-gcc, Squawk3G (Feb, 2005)
+ARMT7DMI (3 Stage processor Pipeline)
+Benchmark              Average Time (ms)         Magnitude Difference                                                                
+                      C         Squawk3G            C to Squawk                                                             
+gibbons             424.9         5274                12.41
+gibbons_final                     5254
+gibbons_no_switch   426.9         6051                14.17
+deutsch_no_acc                    8382 
+deutsch_acc_virtual              15607
+deutsch_acc_final                15607
+deutsch_acc_interfac             28469
+                                                                                                                                      
+DeltaBlue Benchmark                                                                                                                   
+Processor                    Average Time (ms)                      Magnitude Difference                                           
+                              C          Java 1.4.2      Squawk3G      C to Squawk
+P4 Mobile                    6.5            26.84          58.05         8.93
+Pentium Mobile (Centri       3.72            17.04         32.82         8.82
+ARMT7DMI                     n/a                         4766.2
+                                                                                                                                      
+Math Benchmark                                                                                                                        
+Processor                     Average Time (ms)                       Magnitude Difference                                           
+                               C          Java 1.4.2       Squawk3G     C to Squawk
+P4 Mobile                     320              681          17765          55.52
+Pentium Mobile (Centri        260            332.5            754.1         2.9
+ARMT7DMI                    21070                          126025           5.98
+
+Game of Life Benchmark
+Processor                      Average Time (ms)                       Magnitude Difference
+                              C          Java 1.4.2       Squawk3G         C to Squawk
+P4 Mobile                 4229.00          5878.00          4096.00           0.97
+Pentium Mobile (Centri    4793.67          5009.63          4400.82           0.92
+ARMT7DMI                  4336.00                           4032.00           0.93

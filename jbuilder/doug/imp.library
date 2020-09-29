@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<library>
+  <!--JBuilder Library Definition File-->
+  <fullname>imp</fullname>
+  <class>
+    <path>output/imp/classes</path>
+  </class>
+  <source>
+    <path>../../imp/src</path>
+  </source>
+  <lastmodsaved>1138742781203</lastmodsaved>
+</library>

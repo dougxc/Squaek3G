@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Project Group-->
+<projectgroup>
+  <project path="j2me.jpx"/>
+  <project path="translator.jpx"/>
+  <project path="romizer.jpx"/>
+  <project path="builder.jpx"/>
+  <project path="define.jpx"/>
+  <project path="j2se.jpx"/>
+  <project path="compiler.jpx"/>
+  <project path="prototypecompiler.jpx"/>
+  <project path="tck.jpx"/>
+  <project path="graphics.jpx"/>
+  <project path="samples.jpx"/>
+  <project path="mapper.jpx"/>
+  <project path="vmgen.jpx"/>
+  <project path="arm.jpx"/>
+  <project path="debugger.jpx"/>
+  <project path="sdp.jpx"/>
+  <project path="drivers.jpx"/>
+</projectgroup>
